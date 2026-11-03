@@ -1,0 +1,62 @@
+[
+  {
+    "return_id": "RET-0007",
+    "sku": "GAD-1042",
+    "returned_at": "2026-11-02T14:20:00Z",
+    "recommended_destination": "refurbish",
+    "expected_recovery_usd": 82.5,
+    "estimated_carbon_emission_avoided_kg": 14.2,
+    "confidence": 0.84,
+    "value_at_stake_usd": 46.5,
+    "flags": ["data_wipe_required"],
+    "justification": "Intermittent screen issue makes direct restock unsuitable, but the item retains sufficient recovery value for refurbishment. Data wipe must be completed before resale."
+  },
+  {
+    "return_id": "RET-0012",
+    "sku": "GAD-2210",
+    "returned_at": "2026-11-03T08:05:00Z",
+    "recommended_destination": "recycle",
+    "expected_recovery_usd": 6.0,
+    "estimated_carbon_emission_avoided_kg": 3.1,
+    "confidence": 0.93,
+    "value_at_stake_usd": 4.0,
+    "flags": ["swollen_battery", "hazmat_handling"],
+    "justification": "Note reports a swollen battery. Item must not be resold or shipped as-is; route to certified battery recycling with hazmat handling."
+  },
+  {
+    "return_id": "RET-0015",
+    "sku": "GAD-0875",
+    "returned_at": "2026-11-01T16:45:00Z",
+    "recommended_destination": "resell",
+    "expected_recovery_usd": 118.0,
+    "estimated_carbon_emission_avoided_kg": 21.7,
+    "confidence": 0.55,
+    "value_at_stake_usd": 95.0,
+    "flags": ["low_confidence", "missing_packaging"],
+    "justification": "Condition grade is B but the note is ambiguous about whether the fault is cosmetic or functional. Resale as open-box has the highest recovery if the unit powers on reliably; inspect before approving."
+  },
+  {
+    "return_id": "RET-0021",
+    "sku": "GAD-3301",
+    "returned_at": "2026-11-03T09:30:00Z",
+    "recommended_destination": "restock",
+    "expected_recovery_usd": 64.99,
+    "estimated_carbon_emission_avoided_kg": 9.8,
+    "confidence": 0.97,
+    "value_at_stake_usd": 12.0,
+    "flags": [],
+    "justification": "Unopened, original seal intact, grade A. High current demand supports restocking at full price."
+  },
+  {
+    "return_id": "RET-0024",
+    "sku": "GAD-1190",
+    "returned_at": "2026-11-02T10:10:00Z",
+    "recommended_destination": "donate",
+    "expected_recovery_usd": 15.0,
+    "estimated_carbon_emission_avoided_kg": 6.4,
+    "confidence": 0.78,
+    "value_at_stake_usd": 8.0,
+    "flags": ["data_wipe_required"],
+    "justification": "Older model with low resale demand and refurbishment cost close to resale value. Fully functional, so donation (after data wipe) avoids disposal and earns a tax credit."
+  }
+]

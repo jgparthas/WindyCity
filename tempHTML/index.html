@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmic Mart: Return order queue</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <span class="wordmark">Cosmic Mart<b>.</b></span>
+  <h1>Return order queue</h1>
+  <span class="spacer"></span>
+  <span class="progress" id="progress"></span>
+  <label class="btn" for="file">Load JSON</label>
+  <input type="file" id="file" accept=".json,application/json" hidden>
+  <button class="btn" id="export" type="button">Export decisions</button>
+</header>
+<main class="desk">
+  <div class="side">
+    <div class="tabs" role="tablist" aria-label="Queue view">
+      <button class="tab" id="tab-review" type="button" role="tab" aria-controls="queue"></button>
+      <button class="tab" id="tab-approved" type="button" role="tab" aria-controls="queue"></button>
+    </div>
+    <form class="filters" id="filters" aria-label="Sort and filter the list" onsubmit="return false">
+      <label class="wide">Sort by <select id="f-sort"></select></label>
+      <label>Destination <select id="f-dest"></select></label>
+      <label>Flag <select id="f-flag"></select></label>
+      <div class="wide status"><span id="f-count"></span><button class="btn" id="f-clear" type="button" hidden>Clear filters</button></div>
+    </form>
+    <ul class="queue" id="queue" role="tabpanel"></ul>
+  </div>
+  <section class="sheet" id="sheet" aria-live="polite"></section>
+</main>
+
+<script>
+const LANES = ["restock", "refurbish", "resell", "donate", "recycle"];
+const UNSURE_BELOW = 0.7;
+const HAZARD_WORDS = /battery|hazard|hazmat|swollen|fire|leak/i;
+
+let items = [];
+let decisions = {};     // return_id -> { status, destination, recommended, reason, at }
+let selectedId = null;
+let draft = null;       // { destination, reason, flags } while the user is changing the selected item
+let tab = "review";    // "review" or "approved"
+let view = { sort: "priority", dest: "", flag: "" };
+let loadError = "";
+
+const $ = id => document.getElementById(id);
+const usd = n => "$" + Number(n).toFixed(2);
+const pct = n => Math.round(n * 100) + "%";
+const words = s => { const t = String(s).replace(/_/g, " "); return t[0].toUpperCase() + t.slice(1); };
+const isHazard = it => (it.flags || []).some(f => HAZARD_WORDS.test(f));
+const isUnsure = it => it.confidence < UNSURE_BELOW;
+const needsAttention = it => isHazard(it) || isUnsure(it);
+
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  kids.flat().forEach(k => k && e.append(k));
+  return e;
+}
+
+// Open items first; hazards and unsure items next; then largest value at stake.
+function rank(list) {
+  return [...list].sort((a, b) =>
+    (!!decisions[a.return_id] - !!decisions[b.return_id]) ||
+    (decisions[a.return_id] && decisions[b.return_id] ? decisions[b.return_id].at.localeCompare(decisions[a.return_id].at) : 0) ||
+    (needsAttention(b) - needsAttention(a)) ||
+    (b.value_at_stake_usd - a.value_at_stake_usd));
+}
+
+function load(data) {
+  const arr = Array.isArray(data) ? data : (data.returns || data.items || [data]);
+  const valid = arr.filter(r => r && r.return_id && r.recommended_destination);
+  if (!valid.length) throw new Error("No return records found in file.");
+  items = valid;
+  decisions = JSON.parse(localStorage.getItem("returnDecisions") || "{}");
+  selectedId = null;
+  render();
+}
+
+const SORTS = [
+  ["priority", "Priority (default)"],
+  ["time:desc", "Time, newest first"], ["time:asc", "Time, oldest first"],
+  ["recovery:desc", "Expected recovery, high to low"], ["recovery:asc", "Expected recovery, low to high"],
+  ["confidence:desc", "Agent confidence, high to low"], ["confidence:asc", "Agent confidence, low to high"],
+];
+const inTab = () => items.filter(i => tab === "approved" ? decisions[i.return_id] : !decisions[i.return_id]);
+const finalDest = i => (decisions[i.return_id] || {}).destination || i.recommended_destination;
+const flagsOf = i => (decisions[i.return_id] || {}).flags || i.flags || [];
+// Approved tab sorts by when you decided; To review sorts by the return's own time (returned_at), if the file has one.
+const timeOf = i => Date.parse(tab === "approved" ? decisions[i.return_id].at : i.returned_at) || 0;
+const sortValue = { time: timeOf, recovery: i => i.expected_recovery_usd, confidence: i => i.confidence };
+
+function visible() {
+  const list = inTab().filter(i => (!view.dest || finalDest(i) === view.dest) && (!view.flag || flagsOf(i).includes(view.flag)));
+  const [key, dir] = view.sort.split(":");
+  if (key !== "priority") list.sort((a, b) => (sortValue[key](a) - sortValue[key](b)) * (dir === "asc" ? 1 : -1));
+  return list;
+}
+
+function renderFilters() {
+  const fill = (id, opts, value) => {
+    const sel = $(id);
+    sel.replaceChildren(...opts.map(([v, t]) => el("option", { value: v, text: t })));
+    sel.value = value;
+  };
+  if (!$("f-sort").options.length) {
+    fill("f-sort", SORTS, view.sort);
+    fill("f-dest", [["", "Any destination"], ...LANES.map(l => [l, words(l)])], view.dest);
+  }
+  const flags = [...new Set(items.flatMap(i => [...(i.flags || []), ...((decisions[i.return_id] || {}).flags || [])]))].sort();
+  if (flags.join() !== $("f-flag").dataset.opts) {
+    if (view.flag && !flags.includes(view.flag)) view.flag = "";
+    fill("f-flag", [["", "Any flag"], ...flags.map(f => [f, words(f)])], view.flag);
+    $("f-flag").dataset.opts = flags.join();
+  }
+  const active = view.dest || view.flag || view.sort !== "priority";
+  $("f-clear").hidden = !active;
+  const total = inTab().length, shown = visible().length;
+  $("f-count").textContent = view.dest || view.flag ? `Showing ${shown} of ${total}` : "";
+}
+
+for (const [id, key] of [["f-sort", "sort"], ["f-dest", "dest"], ["f-flag", "flag"]]) {
+  $(id).addEventListener("change", e => { view[key] = e.target.value; render(); });
+}
+$("f-clear").addEventListener("click", () => {
+  view = { sort: "priority", dest: "", flag: "" };
+  $("f-sort").value = "priority"; $("f-dest").value = ""; $("f-flag").value = "";
+  render();
+});
+
+function select(id) { selectedId = id; draft = null; render(); }
+
+function render() {
+  items = rank(items);
+  if (!visible().some(i => i.return_id === selectedId)) {
+    selectedId = (visible()[0] || {}).return_id;
+    draft = null;
+  }
+  renderQueue();
+  renderSheet();
+}
+
+function renderQueue() {
+  const open = items.filter(i => !decisions[i.return_id]).length;
+  renderFilters();
+  $("progress").textContent = items.length ? `${open} of ${items.length} left to review` : "";
+  for (const [id, name, count] of [["review", "To review", open], ["approved", "Approved", items.length - open]]) {
+    const t = $("tab-" + id);
+    t.textContent = `${name} (${count})`;
+    t.setAttribute("aria-selected", String(tab === id));
+    t.onclick = () => { tab = id; draft = null; render(); };
+  }
+  $("queue").setAttribute("aria-label", tab === "approved" ? "Approved returns, newest first" : "Returns to review, highest priority first");
+  let n = 0;
+  if (!visible().length && inTab().length) {
+    $("queue").replaceChildren(el("li", { class: "none", text: "No returns match these filters." }));
+    return;
+  }
+  $("queue").replaceChildren(...visible().map(it => {
+    const d = decisions[it.return_id];
+    const kind = d ? "done" : isHazard(it) ? "hazard" : isUnsure(it) ? "unsure" : "";
+    const noteText = d
+      ? (d.status === "approved" ? `Approved: ${d.destination}` : d.destination === it.recommended_destination ? `Approved: ${d.destination}, flags edited` : `Changed to ${d.destination}`)
+      : kind === "hazard" ? `Hazard · ${it.recommended_destination}`
+      : kind === "unsure" ? `Unsure (${pct(it.confidence)}) · ${it.recommended_destination}`
+      : `${it.sku} · ${it.recommended_destination}`;
+    return el("li", {}, el("button", {
+      class: `row ${d ? "decided" : kind}`, type: "button",
+      "aria-current": String(it.return_id === selectedId),
+      onclick: () => select(it.return_id)
+    },
+      el("span", { class: "rank", text: d ? "✓" : String(++n) }),
+      el("span", { class: "id", text: it.return_id }),
+      el("span", { class: "money", text: usd(it.expected_recovery_usd) }),
+      el("span", { class: "note " + kind, text: noteText })));
+  }));
+}
+
+function renderSheet() {
+  const it = items.find(i => i.return_id === selectedId);
+  if (!it && inTab().length) {
+    $("sheet").replaceChildren(el("div", { class: "empty" },
+      el("h2", { text: "No returns match these filters" }),
+      el("p", { text: "Change the destination or flag, or clear the filters to see the full list." })));
+    return;
+  }
+  if (!it && items.length) {
+    $("sheet").replaceChildren(el("div", { class: "empty" },
+      el("h2", { text: tab === "approved" ? "Nothing approved yet" : "Every return is reviewed" }),
+      el("p", { text: tab === "approved" ? "Returns you approve or change will be listed here." : "Check the Approved tab to see what you signed off." })));
+    return;
+  }
+  if (!it) {
+    $("sheet").replaceChildren(el("div", { class: "empty" },
+      el("h2", { text: loadError ? "The queue didn't load" : "No returns to review" }),
+      el("p", {}, loadError ? loadError + " Serve this folder with " : "Serve this folder with ",
+        el("code", { text: "python -m http.server 8000" }),
+        " so queue.json loads automatically, or ",
+        el("label", { for: "file", text: "load a JSON file" }), ".")));
+    return;
+  }
+
+  const d = decisions[it.return_id];
+  const pick = draft ? draft.destination : d ? d.destination : it.recommended_destination;
+  const unsure = isUnsure(it);
+
+  const sheet = el("div", { class: "case" });
+  sheet.append(el("div", { class: "case-head" }, el("h2", { text: it.return_id }), el("span", { text: "SKU " + it.sku })));
+
+  if (isHazard(it)) sheet.append(el("p", { class: "alert hazard", text: "Hazard flagged. Handle it under the safety procedure before any other step." }));
+  if (unsure) sheet.append(el("p", { class: "alert unsure", text: `The agent is unsure (${pct(it.confidence)}). Check the item before you approve.` }));
+
+  // Lane rail shows where the return will go; change it with the Change destination button.
+  sheet.append(el("div", { class: "lanes", role: "img", "aria-label": `Destination: ${pick}. Agent recommended ${it.recommended_destination}.` },
+    LANES.map(l => el("div", { class: "lane" + (l === it.recommended_destination ? " pick" : "") + (l === pick ? " chosen" : "") },
+      el("span", { class: "name", text: l }),
+      el("span", { class: "tag", text: l === it.recommended_destination ? "Agent's pick" : l === pick ? "Your choice" : "" })))));
+
+  sheet.append(el("dl", { class: "figures" },
+    figure("Expected recovery", usd(it.expected_recovery_usd)),
+    figure("Carbon avoided", Number(it.estimated_carbon_emission_avoided_kg).toFixed(1), " kg CO₂e"),
+    figure("Value at stake", usd(it.value_at_stake_usd)),
+    figure("Agent confidence", pct(it.confidence), "", el("span", { class: "meter" }, el("i", { style: `width:${pct(it.confidence)}` })), unsure)));
+
+  sheet.append(el("h3", { text: "Why this route" }),
+    el("p", { class: "reasoning", text: it.justification || "The agent gave no reasoning for this recommendation." }));
+
+  const flags = d ? d.flags : it.flags || [];
+  sheet.append(el("h3", { text: "Flags" }), el("ul", { class: "flags" }, flags.length
+    ? flags.map(f => el("li", { class: HAZARD_WORDS.test(f) ? "hazard" : "", text: words(f) }))
+    : el("li", { class: "none", text: "No flags on this return" })));
+
+  if (draft && !d) sheet.append(changeForm(it));
+  sheet.append(decisionBar(it, d));
+  $("sheet").replaceChildren(sheet);
+}
+
+function figure(name, value, unit = "", extra = null, unsure = false) {
+  return el("div", { class: unsure ? "unsure" : "" },
+    el("dt", { text: name }),
+    el("dd", {}, value, unit ? el("small", { text: unit }) : null),
+    extra);
+}
+
+function sameFlags(a, b) { return a.length === b.length && a.every((f, i) => f === b[i]); }
+
+function changeForm(it) {
+  const keepText = () => { draft.reason = $("reason").value; };
+  const input = el("input", { id: "newflag", type: "text", placeholder: "For example: data_wipe_required" });
+  const addFlag = () => {
+    const f = input.value.trim().toLowerCase().replace(/\s+/g, "_");
+    if (f && !draft.flags.includes(f)) { keepText(); draft.flags.push(f); renderSheet(); $("newflag").focus(); }
+  };
+  input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addFlag(); } });
+  const chips = el("ul", { class: "flags" }, draft.flags.length
+    ? draft.flags.map(f => el("li", { class: HAZARD_WORDS.test(f) ? "hazard" : "" }, words(f),
+        el("button", { type: "button", class: "x", "aria-label": `Remove flag ${words(f)}`, text: "×",
+          onclick: () => { keepText(); draft.flags = draft.flags.filter(x => x !== f); renderSheet(); } })))
+    : el("li", { class: "none", text: "No flags" }));
+  const flagBox = el("div", { class: "flag-edit" }, chips,
+    el("div", { class: "add" }, input, el("button", { class: "btn", type: "button", text: "Add flag", onclick: addFlag })));
+
+  const sel = el("select", { id: "dest", onchange: e => { keepText(); draft.destination = e.target.value; renderSheet(); $("dest").focus(); } },
+    LANES.map(l => el("option", { value: l, text: words(l) + (l === it.recommended_destination ? " (agent's pick)" : "") })));
+  sel.value = draft.destination;
+  const reason = el("textarea", { id: "reason", rows: "2", placeholder: "For example: screen cracked on inspection." });
+  reason.value = draft.reason;
+  reason.addEventListener("input", keepText);
+
+  return el("form", { class: "change", onsubmit: e => e.preventDefault() },
+    el("h3", { text: "Change this recommendation" }),
+    el("label", { for: "dest", text: "Destination" }), sel,
+    el("label", { for: "reason", text: "Reason for the change" }), reason,
+    el("span", { class: "label", text: "Flags" }), flagBox);
+}
+
+function decisionBar(it, d) {
+  if (d) {
+    const flagsEdited = !sameFlags(d.flags, it.flags || []);
+    const what = d.status === "approved" ? `Approved: ${d.destination}`
+      : d.destination !== d.recommended ? `Sent to ${d.destination} instead of ${d.recommended}`
+      : `Approved: ${d.destination}, with edited flags`;
+    return el("div", { class: "decide done " + (d.status === "approved" ? "approved" : "changed") },
+      el("div", { class: "line" },
+        el("p", {}, el("strong", { text: what }), d.reason ? el("span", { text: `. ${d.reason}` }) : null,
+          flagsEdited && d.destination !== d.recommended ? el("span", { text: ". Flags edited." }) : null),
+        el("button", { class: "btn", type: "button", text: "Undo", onclick: () => { delete decisions[it.return_id]; save(); render(); } })));
+  }
+  if (!draft) {
+    return el("div", { class: "decide" }, el("div", { class: "line" },
+      el("p", { text: "Approve the agent's pick, or change it." }),
+      el("button", { class: "btn", type: "button", text: "Change destination",
+        onclick: () => { draft = { destination: it.recommended_destination, reason: "", flags: [...(it.flags || [])] }; renderSheet(); $("dest").focus(); } }),
+      el("button", { class: "btn go approve", type: "button", text: `Approve ${it.recommended_destination}`,
+        onclick: () => decide(it, "approved", it.recommended_destination, "", it.flags || []) })));
+  }
+  const unchanged = draft.destination === it.recommended_destination && sameFlags(draft.flags, it.flags || []);
+  return el("div", { class: "decide" }, el("div", { class: "line" },
+    el("p", { text: unchanged ? "Change the destination or flags to save a change." : "" }),
+    el("button", { class: "btn", type: "button", text: "Cancel", onclick: () => { draft = null; renderSheet(); } }),
+    el("button", { class: "btn go", type: "button",
+      text: draft.destination === it.recommended_destination ? "Save flag changes" : `Send to ${draft.destination} instead`,
+      ...(unchanged ? { disabled: "" } : {}),
+      onclick: () => decide(it, "changed", draft.destination, draft.reason.trim(), draft.flags) })));
+}
+
+function decide(it, status, destination, reason, flags) {
+  decisions[it.return_id] = { status, destination, recommended: it.recommended_destination, reason, flags, at: new Date().toISOString() };
+  save();
+  draft = null;
+  const next = items.find(i => !decisions[i.return_id]);
+  selectedId = next ? next.return_id : it.return_id;
+  render();
+}
+
+function save() { localStorage.setItem("returnDecisions", JSON.stringify(decisions)); }
+
+$("file").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try { load(JSON.parse(await f.text())); } catch (err) { loadError = err.message; render(); }
+  e.target.value = "";
+});
+
+$("export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(decisions, null, 2)], { type: "application/json" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: "return-decisions.json" });
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+fetch("queue.json").then(r => r.ok ? r.json() : Promise.reject(new Error("queue.json wasn't found."))).then(load)
+  .catch(err => { loadError = err.message || "queue.json couldn't be read."; render(); });
+</script>
+</body>
+</html>
