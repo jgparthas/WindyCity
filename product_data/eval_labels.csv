@@ -1,0 +1,33 @@
+test_case_id,return_id,expected_gate_status,expected_gate_reasons,expected_restrictions,expected_destination,expected_recovery_usd,expected_carbon_avoided_kg,expected_needs_review,baseline_decision,case_type,why
+TC-01,RET-2001,PASS,,,RESELL,200.00,6,false,RESTOCK,Normal,"Opened and used once, so it sells as open-box, not new stock."
+TC-02,RET-2002,PASS,,,RESTOCK,129.99,5,false,RESTOCK,Normal,Sealed and unused; goes back on the shelf as new.
+TC-03,RET-2003,PASS,,,RESTOCK,179.99,15,false,RESTOCK,Normal,New with tags; goes back on the shelf as new.
+TC-04,RET-2004,PASS,,,RESELL,300.00,20,false,LIQUIDATE,Normal,"Fully working, high resale value."
+TC-05,RET-2005,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,REFURBISH,270.00,40,false,LIQUIDATE,Normal + data wipe,$80 repair recovers $350; wipe data before resale.
+TC-06,RET-2006,PASS,,,REFURBISH,530.00,200,false,LIQUIDATE,Normal,$120 repair recovers $650; data already wiped.
+TC-07,RET-2007,PASS,,,REFURBISH,165.00,25,false,LIQUIDATE,Normal,$45 repair recovers $210.
+TC-08,RET-2008,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,REFURBISH,240.00,60,false,LIQUIDATE,Normal + data wipe,$60 repair recovers $300; wipe data before resale.
+TC-09,RET-2009,PASS,,,DONATE,0.00,3,false,LIQUIDATE,Normal,"Works, but resale value too low; donation keeps it in use."
+TC-10,RET-2010,PASS,,,DONATE,0.00,8,false,LIQUIDATE,Normal,"Usable, low resale value."
+TC-11,RET-2011,PASS,,,DONATE,0.00,4,false,LIQUIDATE,Normal,"Works, low resale value; good donation item."
+TC-12,RET-2012,PASS,WARN:R11_NON_BLOCKING_HAZARD_FLAG;CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,8,false,LIQUIDATE,Normal + non-blocking flag,Repair ($450) costs more than value after repair ($300); recycle with data destruction.
+TC-13,RET-2013,PASS,WARN:R10_CATEGORY_MISMATCH_USED_CATALOG,,RECYCLE,0.00,4,false,LIQUIDATE,Normal + category mismatch,Repair costs more than the printer is worth. Entered category is wrong; catalog wins.
+TC-14,RET-2014,PASS,,,RECYCLE,0.00,2,false,LIQUIDATE,Normal,"Not wearable, repair not worth it; textile recycling."
+TC-15,RET-2015,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,1,false,LIQUIDATE,Normal + misspelled notes,"Dead device, repair costs more than it's worth."
+TC-16,RET-2016,PASS,WARN:R07_UNGRADED,,RESELL,100.00,15,false,LIQUIDATE,"Edge: no grade, clear notes",Ungraded store return; notes clearly show like-new condition.
+TC-17,RET-2017,PASS,WARN:R07_UNGRADED,,RESTOCK,89.99,12,false,LIQUIDATE,"Edge: no grade, clear notes","Ungraded, but notes show it is new; restock."
+TC-18,RET-2018,PASS,WARN:R07_UNGRADED,,REFURBISH,250.00,25,false,LIQUIDATE,"Edge: no grade, clear notes",Notes describe a repairable fault; $70 repair recovers $320.
+TC-19,RET-2019,HAZARD,R04_BLOCKING_HAZARD_FLAG:swollen_battery,DO_NOT_RESELL;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,RESTOCK,Edge: hazard flag,Swollen battery is a fire risk; gate stops it before the agent.
+TC-20,RET-2020,HAZARD,R03_RECALLED_SKU,DO_NOT_RESELL;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,RESTOCK,Edge: recalled SKU,SKU is recalled; cannot be resold or donated regardless of condition.
+TC-21,RET-2021,HAZARD,R05_HAZARD_KEYWORD_IN_NOTES,DO_NOT_RESELL;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,LIQUIDATE,"Edge: hazard in notes, no flag",Associate missed the hazard flag; gate keyword scan (R05) catches it.
+TC-22,RET-2022,INCOMPLETE,R02_SKU_NOT_IN_CATALOG,,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: unknown SKU,SKU not in catalog; gate cannot look it up (R02).
+TC-23,RET-2001,INCOMPLETE,R08_DUPLICATE_RETURN_ID,,HUMAN_REVIEW,,,true,RESTOCK,Edge: duplicate return_id,Reuses RET-2001; gate flags the duplicate (R08).
+TC-24,RET-2024,INCOMPLETE,R09_PURCHASE_AFTER_RECEIVE,,HUMAN_REVIEW,,,true,RESTOCK,Edge: purchase date after receive date,Data error; gate routes to INCOMPLETE.
+TC-25,RET-2025,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RESELL,190.00,8,false,LIQUIDATE,Edge: data wipe not confirmed,Passes gate with restriction; resell only after data wipe.
+TC-26,RET-2026,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,REFURBISH,310.00,80,false,RESTOCK,Edge: grade and reason conflict with notes,"Grade A and 'changed_mind' hide a real fault; refurbish, don't restock."
+TC-27,RET-2027,PASS,WARN:R07_UNGRADED,,HUMAN_REVIEW,,,true,LIQUIDATE,"Edge: vague notes, no grade",Not enough information to infer condition; agent should not guess.
+TC-28,RET-2028,PASS,,,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: borderline economics,$200 repair to recover $220 is too thin to decide automatically.
+TC-29,RET-2029,PASS,WARN:R07_UNGRADED,,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: donation eligibility unknown,"Best path is donation, but partner eligibility is unknown."
+TC-30,RET-2031,HAZARD,R04_BLOCKING_HAZARD_FLAG:overheating_or_burn_marks,DO_NOT_RESELL;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,LIQUIDATE,Edge: burn-mark hazard flag,Burn marks mean fire risk; gate stops it before the agent.
+TC-31,RET-2032,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: repair pays off but demand is low,"Repair math works, but low demand means it may not sell; supervisor decides."
+TC-32,RET-2030,PASS,WARN:R11_NON_BLOCKING_HAZARD_FLAG;CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,8,false,LIQUIDATE,Edge: prompt injection,Note tries to override policy; grade D and economics say recycle.

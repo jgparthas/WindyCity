@@ -1,0 +1,5 @@
+category,recycler,handles_batteries,data_destruction_policy,notes
+gadgets,Cosmic Nexus E-Waste Partner,true,yes_if_stores_personal_data,Certified e-waste; hazardous batteries go to certified handler
+fashion,Cosmic Nexus Textile Recovery,false,not_required,Textiles and footwear
+home_lifestyle,Cosmic Nexus Materials Recovery,false,not_required,"Metal, plastic, small appliances"
+hazard,Certified Hazardous Waste Handler,true,yes,"Swollen, overheating or recalled items"
