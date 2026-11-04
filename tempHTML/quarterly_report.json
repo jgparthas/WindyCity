@@ -1,0 +1,60 @@
+{
+  "sample_data": true,
+  "note": "Synthetic sample figures sized for a retailer with 144 million customers. Not actual Cosmic Mart results. In Q2 and Q3 2026 there was no agent or software: 89% of returns went to a waste plant and 11% were resold. The agent system went live in Q4 2026.",
+  "units": {
+    "money_saved": "USD",
+    "carbon_emissions": "kg",
+    "waste_disposed": "lbs",
+    "disposition_breakdown": "percent of returns processed"
+  },
+  "quarters": [
+    {
+      "quarter": "Q2 2026",
+      "is_current": false,
+      "agent_in_use": false,
+      "returns_processed": 18640000,
+      "money_saved_usd": 90200000,
+      "carbon_emissions_kg": 16800000,
+      "waste_disposed_lbs": 16590000,
+      "disposition_breakdown_pct": {
+        "resell": 11,
+        "refurbish": 0,
+        "donate": 0,
+        "waste": 89,
+        "restock": 0
+      }
+    },
+    {
+      "quarter": "Q3 2026",
+      "is_current": false,
+      "agent_in_use": false,
+      "returns_processed": 19420000,
+      "money_saved_usd": 95100000,
+      "carbon_emissions_kg": 17700000,
+      "waste_disposed_lbs": 17280000,
+      "disposition_breakdown_pct": {
+        "resell": 9,
+        "refurbish": 0,
+        "donate": 0,
+        "waste": 91,
+        "restock": 0
+      }
+    },
+    {
+      "quarter": "Q4 2026",
+      "is_current": true,
+      "agent_in_use": true,
+      "returns_processed": 20150000,
+      "money_saved_usd": 1015600000,
+      "carbon_emissions_kg": 219700000,
+      "waste_disposed_lbs": 1615000,
+      "disposition_breakdown_pct": {
+        "resell": 28,
+        "refurbish": 24,
+        "donate": 11,
+        "waste": 5,
+        "restock": 32
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cosmic Mart Return order queue</title>
+  <link rel="stylesheet" href="styles.css?v=5">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="wordmark">Cosmic Mart<span aria-hidden="true">.</span></h1>
+    <p class="app-sub">Return order queue</p>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+        <button class="tab is-active" role="tab" id="tab-queue" aria-controls="main" aria-selected="true" data-tab="queue">To review (<span id="count-queue">0</span>)</button>
+        <button class="tab" role="tab" id="tab-approved" aria-controls="main" aria-selected="false" data-tab="approved" tabindex="-1">Approved (<span id="count-approved">0</span>)</button>
+        <button class="tab" role="tab" id="tab-reports" aria-controls="main" aria-selected="false" data-tab="reports" tabindex="-1">Reports</button>
+      </nav>
+
+      <div id="side-list">
+        <div class="controls">
+          <label class="field"><span>Search</span><input type="search" id="f-search" placeholder="ID, product, category, reason, notes"></label>
+          <div class="field">
+            <label for="f-sort">Sort by</label>
+            <div class="sort-row">
+              <select id="f-sort"></select>
+              <button type="button" class="btn btn-ghost" id="f-dir" aria-label="Toggle sort direction">Newest first</button>
+            </div>
+          </div>
+          <div class="two">
+            <label class="field"><span>Destination</span><select id="f-dest"></select></label>
+            <label class="field"><span>Flag</span><select id="f-flag"></select></label>
+          </div>
+          <div class="two">
+            <label class="field"><span>Category</span><select id="f-cat"></select></label>
+            <label class="field"><span>Condition</span><select id="f-cond"></select></label>
+          </div>
+        </div>
+        <div class="result-row">
+          <p id="result" aria-live="polite"></p>
+          <button type="button" class="link-btn" id="f-clear">Clear filters</button>
+        </div>
+        <div id="list"></div>
+      </div>
+
+      <nav id="side-reports" class="jump" aria-label="Jump to a report" hidden>
+        <a href="#hero-title">Where returns go</a>
+        <a href="#chart-returns">Returns processed</a>
+        <a href="#data-tables">Data tables</a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main" tabindex="-1">
+      <div id="load-error" class="notice notice-error" hidden></div>
+      <div id="detail"></div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="script.js?v=5"></script>
+</body>
+</html>
