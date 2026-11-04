@@ -48,11 +48,12 @@ Build exactly these files in the project root:
 ├── styles.css      # All styling
 ├── script.js       # All behavior and state
 └── queue.json      # Local data source (named "queue")
+└── quarterly_report.json      # Local quarterly report data source
 ```
 
 - Use plain HTML, CSS, and JavaScript. Do not add a framework or build step unless the user approves.
 - Whether external libraries (for example a chart library) are allowed has **not** been decided. Ask before adding any (see Section 9).
-- Load data from `queue.json` in `script.js`. Browsers usually block `fetch` of local files when `index.html` is opened directly from disk, so tell the user if a local server is needed.
+- Load data from `queue.json` and `quarterly_report.json` in `script.js`. Browsers usually block `fetch` of local files when `index.html` is opened directly from disk, so tell the user if a local server is needed.
 
 ## 5. Tab requirements
 
@@ -105,7 +106,6 @@ Every return record has **all** of the following fields. These are the fields th
 | Return ID | |
 | Product | |
 | Category | |
-| Customer or store | Whether this is a customer, a store, or both per record is not specified. Ask. |
 | Return reason | |
 | Condition | |
 | Date received | |
@@ -160,8 +160,7 @@ Use the **Anthropic Frontend Design skill** for all visual work.
 7. **Persistence.** Should approvals, reopens, and edits survive a page reload?
 8. **External libraries.** Are chart libraries or icon libraries allowed?
 9. **Branding assets.** Are there any logos, fonts, or exact color values?
-10. **Customer or store.** Is each return tied to a customer, a store, or either one?
-11. **Browser, accessibility, and testing expectations.** None were specified. Ask what the target is.
+10. **Browser, accessibility, and testing expectations.** None were specified. Ask what the target is.
 
 ## 10. Definition of done
 

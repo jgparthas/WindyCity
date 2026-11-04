@@ -1,15 +1,6 @@
 (function () {
   'use strict';
 
-  /* ---------- SAMPLE DATA (synthetic, not Cosmic Mart figures) ----------
-     Prior-quarter history for Quarterly Reports. Replace when real data exists. */
-  const SAMPLE_HISTORY = [
-    { quarter: 'Q4 2025', money: 18200, carbon: 2600, waste: 410 },
-    { quarter: 'Q1 2026', money: 21400, carbon: 3050, waste: 372 },
-    { quarter: 'Q2 2026', money: 24900, carbon: 3500, waste: 340 },
-    { quarter: 'Q3 2026', money: 27300, carbon: 3900, waste: 301 }
-  ];
-
   const PAGE = 10;
   const DEST_ORDER = ['restock', 'refurbish', 'resell', 'donate', 'recycle'];
   const URGENT_FLAGS = ['swollen_battery', 'hazmat_handling'];
@@ -25,6 +16,7 @@
 
   const blank = () => ({ search: '', dest: '', cat: '', cond: '', flag: '', sort: 'returned_at', dir: 'desc', shown: PAGE, key: '' });
   const state = {
+    report: null,
     returns: [], destinations: [], categories: [], conditions: [], flags: [],
     tab: 'queue',
     sel: { queue: null, approved: null },
@@ -47,9 +39,10 @@
   const isList = () => state.tab !== 'reports';
 
   /* ---------- Load ---------- */
-  fetch('queue.json')
-    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-    .then(data => {
+  const getJson = url => fetch(url).then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+  Promise.all([getJson('queue.json'), getJson('quarterly_report.json').catch(() => null)])
+    .then(([data, report]) => {
+      state.report = report;
       state.returns = data.map(r => ({ ...r, status: r.status === 'approved' ? 'approved' : 'queue', original_destination: r.recommended_destination }));
       const dests = unique(state.returns.map(r => r.recommended_destination));
       state.destinations = DEST_ORDER.filter(d => dests.includes(d)).concat(dests.filter(d => !DEST_ORDER.includes(d)));
@@ -216,7 +209,6 @@
     const locked = r.status === 'approved';
     const changed = r.recommended_destination !== r.original_destination;
     const low = r.flags.includes('low_confidence');
-    const gap = '<span class="none">Not in data</span>';
     const dest = r.recommended_destination;
 
     const segs = state.destinations.map(d =>
@@ -250,7 +242,6 @@
       '<div class="d-section"><h3>Flags</h3>' + flagsHtml(r.flags) + '</div>' +
       '<div class="d-section"><h3>Return details</h3><dl class="dl">' +
       '<dt>Return reason</dt><dd>' + esc(r.return_reason) + '</dd>' +
-      '<dt>Customer or store</dt><dd>' + gap + '</dd>' +
       '<dt>Date received</dt><dd>' + esc(fmtDate(r.returned_at)) + '</dd>' +
       '<dt>Weight</dt><dd>' + num1(r.weight_lbs) + ' lbs</dd>' +
       '<dt>Status</dt><dd>' + (locked ? 'Approved' : 'Waiting for review') + '</dd>' +
@@ -309,84 +300,113 @@
     toast.timer = setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  /* ---------- Quarterly reports ---------- */
+  /* ---------- Quarterly reports (from quarterly_report.json) ---------- */
+  const compact = (n, pre, suf) => {
+    const a = Math.abs(n);
+    const v = a >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : a >= 1e3 ? (n / 1e3).toFixed(0) + 'K' : String(Math.round(n));
+    return (pre || '') + v + (suf || '');
+  };
   const METRICS = [
-    { key: 'money', title: 'Money saved', unit: 'USD', better: 'up', fmt: moneyWhole },
-    { key: 'carbon', title: 'Carbon emissions reduced', unit: 'kg CO₂e', better: 'up', fmt: v => Math.round(v).toLocaleString('en-US') + ' kg' },
-    { key: 'waste', title: 'Waste disposed', unit: 'lbs', better: 'down', fmt: v => Math.round(v).toLocaleString('en-US') + ' lbs' }
+    { key: 'returns_processed', id: 'returns', title: 'Returns processed', unit: 'returns', better: 'up', short: v => compact(v), full: v => v.toLocaleString('en-US') },
+    { key: 'money_saved_usd', id: 'money', title: 'Money saved', unit: 'USD', better: 'up', short: v => compact(v, '$'), full: v => '$' + v.toLocaleString('en-US') },
+    { key: 'carbon_emissions_kg', id: 'carbon', title: 'Carbon emissions', unit: 'kg', better: 'up', short: v => compact(v, '', ' kg'), full: v => v.toLocaleString('en-US') + ' kg' },
+    { key: 'waste_disposed_lbs', id: 'waste', title: 'Waste disposed', unit: 'lbs', better: 'down', short: v => compact(v, '', ' lbs'), full: v => v.toLocaleString('en-US') + ' lbs' }
+  ];
+  // Strip order: kept destinations first, waste last.
+  const DISPOSITIONS = [
+    { key: 'restock', name: 'Restock', better: 'up' },
+    { key: 'resell', name: 'Resell', better: 'up' },
+    { key: 'refurbish', name: 'Refurbish', better: 'up' },
+    { key: 'donate', name: 'Donate', better: 'up' },
+    { key: 'waste', name: 'Waste', better: 'down' }
   ];
 
-  function currentQuarter() {
-    const latest = Math.max.apply(null, state.returns.map(r => Date.parse(r.returned_at)));
-    return quarterOf(new Date(latest).toISOString());
-  }
-
-  function currentFigures(q) {
-    const done = state.returns.filter(r => r.status === 'approved' && quarterOf(r.returned_at) === q);
-    return {
-      quarter: q,
-      money: done.reduce((a, r) => a + r.expected_recovery_usd, 0),
-      carbon: done.reduce((a, r) => a + r.estimated_carbon_emission_avoided_kg, 0),
-      waste: done.filter(r => r.recommended_destination === 'recycle').reduce((a, r) => a + r.weight_lbs, 0),
-      count: done.length
-    };
-  }
-
-  function deltaInfo(m, cur, prev) {
-    if (prev === 0) return { text: 'No prior figure', cls: 'flat' };
-    const change = (cur - prev) / prev * 100;
+  function deltaInfo(better, cur, prev, points) {
+    if (!prev && !points) return { text: 'No prior figure', cls: 'flat' };
+    const change = points ? cur - prev : (cur - prev) / prev * 100;
     if (Math.abs(change) < 0.05) return { text: 'No change', cls: 'flat' };
-    const improved = m.better === 'up' ? change > 0 : change < 0;
-    return { text: (change > 0 ? '+' : '') + change.toFixed(1) + '%', cls: improved ? 'good' : 'bad', arrow: change > 0 ? '▲' : '▼' };
+    const improved = better === 'up' ? change > 0 : change < 0;
+    const text = (change > 0 ? '+' : '') + change.toLocaleString('en-US', { minimumFractionDigits: points ? 0 : 1, maximumFractionDigits: points ? 0 : 1 }) + (points ? ' pts' : '%');
+    return { text: text, cls: improved ? 'good' : 'bad', arrow: change > 0 ? '▲' : '▼' };
   }
+  const deltaHtml = d => '<span class="delta ' + d.cls + '">' + (d.arrow ? d.arrow + ' ' : '') + d.text + '</span>';
 
   function renderReports() {
-    const cur = currentFigures(currentQuarter());
-    const series = SAMPLE_HISTORY.concat([cur]);
-    const prev = SAMPLE_HISTORY[SAMPLE_HISTORY.length - 1];
+    const r = state.report;
+    if (!r || !r.quarters || r.quarters.length < 2) {
+      $('#detail').innerHTML = '<div class="reports"><h2 class="page">Quarterly reports</h2><div class="empty"><strong>Quarterly report data did not load.</strong>Check that quarterly_report.json is in the same folder and that the page is served from a local server.</div></div>';
+      return;
+    }
+    const qs = r.quarters;
+    const cur = qs[qs.length - 1];
+    const prev = qs[qs.length - 2];
+    const launch = qs.find((s, i) => s.agent_in_use && i > 0 && !qs[i - 1].agent_in_use);
 
-    let h = '<div class="reports"><h2 class="page">Quarterly reports</h2>' +
-      '<p class="report-note">' + cur.quarter + ' to date is based on ' + cur.count + ' approved return' + (cur.count === 1 ? '' : 's') + '; earlier quarters are sample data.</p>';
+    let h = '<div class="reports"><div class="page-head"><h2 class="page">Quarterly reports</h2>' + (r.sample_data ? '<span class="tag-sample">Sample data</span>' : '') + '</div>' +
+      '<p class="lede">' + (launch ? 'The agent system went live in ' + esc(launch.quarter) + '. Each figure compares ' + esc(cur.quarter) + ' with the quarters before it.' :
+        esc(cur.quarter) + ' is the current quarter, compared with the quarters before it.') + '</p>';
+
+    h += '<section class="hero" aria-labelledby="hero-title"><h3 id="hero-title">Where returns go</h3><p class="hero-sub">Share of all returns by destination, per quarter</p>' +
+      '<ul class="key">' + DISPOSITIONS.map(d => '<li><i class="sw ' + d.key + '"></i>' + d.name + '</li>').join('') + '</ul>' + stripsHtml(qs) + '</section>';
 
     h += '<div class="kpis">' + METRICS.map(m => {
-      const d = deltaInfo(m, cur[m.key], prev[m.key]);
-      return '<div class="kpi"><h3>' + m.title + '</h3><div class="big">' + m.fmt(cur[m.key]) + '</div>' +
-        '<div class="delta ' + d.cls + '">' + (d.arrow ? d.arrow + ' ' : '') + d.text + '</div>' +
-        '<div class="vs">vs ' + prev.quarter + ' (' + m.fmt(prev[m.key]) + '); ' + (m.better === 'up' ? 'higher' : 'lower') + ' is better</div></div>';
+      const d = deltaInfo(m.better, cur[m.key], prev[m.key]);
+      return '<div class="kpi"><h3>' + m.title + '</h3><div class="big">' + m.short(cur[m.key]) + '</div>' + deltaHtml(d) +
+        '<div class="vs">vs ' + esc(prev.quarter) + ' (' + m.short(prev[m.key]) + ')' + (m.better === 'down' ? '; lower is better' : '') + '</div></div>';
     }).join('') + '</div>';
 
-    h += '<div class="charts">' + METRICS.map(m => chartHtml(m, series)).join('') + '</div>';
+    h += '<div class="charts">' + METRICS.map(m => chartHtml(m, qs)).join('') + '</div>';
 
-    h += '<h2 class="reports-heading">Tables</h2>';
+    h += '<h2 class="reports-heading" id="data-tables">Data tables</h2>';
     METRICS.forEach(m => {
-      h += '<details class="report-section"><summary>' + m.title + ' by quarter (table)</summary><div class="table-scroll"><table><thead><tr><th>Quarter</th><th class="num">' + m.title + ' (' + m.unit + ')</th><th class="num">Change vs previous quarter</th></tr></thead><tbody>';
-      series.forEach((s, i) => {
-        const d = i === 0 ? { text: '—', cls: 'flat' } : deltaInfo(m, s[m.key], series[i - 1][m.key]);
-        h += '<tr><td>' + s.quarter + (i === series.length - 1 ? ' (to date)' : '<span class="tag-sample">Sample</span>') + '</td><td class="num">' + m.fmt(s[m.key]) +
-          '</td><td class="num"><span class="delta ' + d.cls + '">' + (d.arrow ? d.arrow + ' ' : '') + d.text + '</span></td></tr>';
+      h += '<details class="report-section"><summary>' + m.title + ' by quarter</summary><div class="table-scroll"><table><thead><tr><th>Quarter</th><th class="num">' + m.title + ' (' + m.unit + ')</th><th class="num">Change vs previous quarter</th></tr></thead><tbody>';
+      qs.forEach((s, i) => {
+        const d = i === 0 ? { text: '—', cls: 'flat' } : deltaInfo(m.better, s[m.key], qs[i - 1][m.key]);
+        h += '<tr><td>' + esc(s.quarter) + (s.is_current ? ' (current)' : '') + '</td><td class="num">' + s[m.key].toLocaleString('en-US') + '</td><td class="num">' + deltaHtml(d) + '</td></tr>';
       });
       h += '</tbody></table></div></details>';
     });
+    h += '<details class="report-section"><summary>Where returns go by quarter</summary><div class="table-scroll"><table><thead><tr><th>Destination</th>' +
+      qs.map(s => '<th class="num">' + esc(s.quarter) + '</th>').join('') + '<th class="num">Change vs previous quarter</th></tr></thead><tbody>';
+    DISPOSITIONS.forEach(d => {
+      const c = cur.disposition_breakdown_pct[d.key], p = prev.disposition_breakdown_pct[d.key];
+      h += '<tr><td>' + d.name + '</td>' + qs.map(s => '<td class="num">' + s.disposition_breakdown_pct[d.key] + '%</td>').join('') +
+        '<td class="num">' + deltaHtml(deltaInfo(d.better, c, p, true)) + '</td></tr>';
+    });
+    h += '</tbody></table></div></details>';
     $('#detail').innerHTML = h + '</div>';
   }
 
-  function chartHtml(m, series) {
+  function stripsHtml(qs) {
+    let h = '';
+    qs.forEach((s, i) => {
+      if (s.agent_in_use && i > 0 && !qs[i - 1].agent_in_use) h += '<div class="launch"><span>Agent system live</span></div>';
+      const b = s.disposition_breakdown_pct;
+      const segs = DISPOSITIONS.filter(d => b[d.key] > 0).map(d =>
+        '<div class="seg-bar ' + d.key + '" style="flex-grow:' + b[d.key] + '" title="' + d.name + ' ' + b[d.key] + '%">' +
+        '<b>' + b[d.key] + '%</b>' + (b[d.key] >= 12 ? '<span>' + d.name + '</span>' : '') + '</div>').join('');
+      const aria = DISPOSITIONS.map(d => d.name + ' ' + b[d.key] + '%').join(', ');
+      h += '<div class="strip-row"><div class="strip-q">' + esc(s.quarter) + '</div><div class="strip" role="img" aria-label="' + esc(s.quarter + ': ' + aria) + '">' + segs + '</div></div>';
+    });
+    return h;
+  }
+
+  function chartHtml(m, qs) {
     const W = 360, H = 220, padL = 10, padR = 10, padT = 24, padB = 30;
-    const max = Math.max.apply(null, series.map(s => s[m.key])) || 1;
-    const bw = (W - padL - padR) / series.length;
-    const bars = series.map((s, i) => {
+    const max = Math.max.apply(null, qs.map(s => s[m.key])) || 1;
+    const bw = (W - padL - padR) / qs.length;
+    const bars = qs.map((s, i) => {
       const v = s[m.key];
       const bh = (v / max) * (H - padT - padB);
       const x = padL + i * bw + bw * 0.18, w = bw * 0.64, y = H - padB - bh;
-      const isCur = i === series.length - 1;
-      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(bh, 1).toFixed(1) + '" rx="3" fill="' + (isCur ? '#7c22e8' : '#c9c7d1') + '"/>' +
-        '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="600">' + (m.key === 'money' ? moneyWhole(v) : Math.round(v).toLocaleString('en-US')) + '</text>' +
-        '<text class="axis" x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle">' + s.quarter + '</text>';
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(bh, 2).toFixed(1) + '" rx="3" fill="' + (s.agent_in_use ? '#7c22e8' : '#c9c7d1') + '"/>' +
+        '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="600">' + m.short(v) + '</text>' +
+        '<text class="axis" x="' + (x + w / 2).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle">' + esc(s.quarter) + '</text>';
     }).join('');
-    const summary = series.map(s => s.quarter + ': ' + m.fmt(s[m.key])).join('; ');
-    return '<figure class="chart" id="chart-' + m.key + '"><h3>' + m.title + '</h3><div class="sub">' + m.unit + ' per quarter, ' + (m.better === 'up' ? 'higher is better' : 'lower is better') + '</div>' +
+    const summary = qs.map(s => s.quarter + ': ' + m.full(s[m.key])).join('; ');
+    return '<figure class="chart" id="chart-' + m.id + '"><h3>' + m.title + '</h3><div class="sub">' + m.unit + ' per quarter, ' + (m.better === 'up' ? 'higher is better' : 'lower is better') + '</div>' +
       '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(m.title + ' by quarter. ' + summary) + '">' +
       '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="#d9d2e4"/>' + bars + '</svg>' +
-      '<div class="legend"><span><i style="background:#c9c7d1"></i>Sample quarters</span><span><i style="background:#7c22e8"></i>Current quarter to date</span></div></figure>';
+      '<div class="legend"><span><i style="background:#c9c7d1"></i>Before the agent</span><span><i style="background:#7c22e8"></i>With the agent</span></div></figure>';
   }
 })();
