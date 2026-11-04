@@ -1,0 +1,25 @@
+sku,product_name,category,original_price,warranty_months,has_battery,has_data_storage,weight_kg,donation_eligible,recyclable,carbon_kg_avoided_if_reused,carbon_kg_avoided_if_recycled
+GAD-1001,Wireless Headphones,gadgets,249.99,12,true,false,0.25,true,true,6,1
+GAD-1002,Bluetooth Speaker,gadgets,129.99,12,true,false,0.60,true,true,5,1
+GAD-1003,Smartwatch,gadgets,299.00,12,true,true,0.05,true,true,8,2
+GAD-1004,Galaxy Tablet,gadgets,599.00,12,true,true,0.50,true,true,40,8
+GAD-1005,Laptop 14in,gadgets,1099.00,12,true,true,1.50,true,true,200,40
+GAD-1006,Gaming Console,gadgets,499.00,12,false,true,4.00,true,true,60,12
+GAD-1007,Wired Headphones (older model),gadgets,119.00,12,false,false,0.20,true,true,3,1
+GAD-1008,Inkjet Printer,gadgets,149.00,12,false,false,5.00,false,true,20,4
+GAD-1009,Smartphone,gadgets,799.00,12,true,true,0.20,true,true,60,12
+GAD-1010,Noise-Cancelling Headphones,gadgets,349.00,12,true,false,0.30,true,true,8,2
+GAD-1011,Smart TV 55in,gadgets,599.00,12,false,true,15.00,true,true,80,16
+GAD-1012,Robot Vacuum,gadgets,349.00,12,true,false,3.50,true,true,25,5
+GAD-1014,Fitness Tracker,gadgets,79.99,12,true,true,0.03,true,true,4,1
+GAD-1015,E-Reader,gadgets,139.99,12,true,true,0.20,true,true,15,3
+GAD-1016,Digital Camera,gadgets,449.00,12,true,true,0.60,true,true,25,5
+GAD-1017,Power Bank 20000mAh,gadgets,49.99,12,true,false,0.40,false,true,3,1
+GAD-1018,Wireless Earbuds,gadgets,159.99,12,true,false,0.06,false,true,3,1
+FSH-3001,Winter Jacket,fashion,179.99,0,false,false,1.20,true,true,15,3
+FSH-3002,Children's Coat,fashion,59.99,0,false,false,0.60,true,true,8,2
+FSH-3003,Running Shoes,fashion,119.99,0,false,false,0.80,true,true,10,2
+FSH-3004,Leather Handbag,fashion,89.99,0,false,false,0.90,true,true,12,2
+HOM-4001,Stand Mixer,home_lifestyle,399.99,12,false,false,10.00,true,true,20,4
+HOM-4002,Desk Lamp,home_lifestyle,44.99,12,false,false,1.20,true,true,4,1
+HOM-4003,Office Chair,home_lifestyle,199.99,24,false,false,15.00,,true,25,5
