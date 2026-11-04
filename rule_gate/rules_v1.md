@@ -22,7 +22,7 @@ Precedence: HAZARD > INCOMPLETE > PASS. When HAZARD or INCOMPLETE fires, all BLO
 
 | gate_status | route | proposed_destination | allowed_destinations |
 |---|---|---|---|
-| PASS | agent | null | non-empty subset of the five |
+| PASS | agent | null | non-empty subset of the four |
 | HAZARD | review_queue | human_review | [] |
 | INCOMPLETE | review_queue | human_review | [] |
 
@@ -37,8 +37,8 @@ Whole-word, case-insensitive: burning, burnt, smoke, smoking, on fire, caught fi
 ## Conventions and assumptions
 - **Timestamps**: local receiving-site time, ISO 8601, no timezone suffix, for `received_at` and `evaluated_at`. If timezones are added later, use UTC with `Z` everywhere.
 - **Enums**: lowercase in gate output (`human_review`, `review_queue`).
-- **PASS allowed_destinations**: starts as all five; `donate` is removed when catalog `donation_eligible` is false, `recycle` when `recyclable` is false. Unknown (null) eligibility is not treated as false. (Assumption – confirm.)
-- **R06** does not shrink allowed_destinations; it sets `data_wipe_required: true` (wipe before restock, resell, donate, or release after refurbishment).
+- **PASS allowed_destinations**: starts as all four (restock, refurbish, donate, recycle; `resell` was merged into `restock` and the rule version stays v1 because the destination list is schema, not a rule); `donate` is removed when catalog `donation_eligible` is false, `recycle` when `recyclable` is false. Unknown (null) eligibility is not treated as false. (Assumption – confirm.)
+- **R06** does not shrink allowed_destinations; it sets `data_wipe_required: true` (wipe before restock, donate, or release after refurbishment).
 - **Joins**: use `test_case_id`, because RET-2001 intentionally appears twice. `test_case_id` is carried through in `record` unchanged.
 - **Answer-key mapping**: key strings such as `CONSTRAIN:R06_DATA_WIPE_REQUIRED` map to rule_id by the `Rxx` prefix; `HAZARD_REVIEW` maps to `human_review`; `DO_NOT_*` restrictions are implied by HAZARD status.
 - Untrusted free text (`customer_notes`) is only pattern-matched, never interpreted as instructions.
@@ -47,6 +47,6 @@ Whole-word, case-insensitive: burning, burnt, smoke, smoking, on fire, caught fi
 `product_data/product_catalog.csv` (sku, category, product_name, has_battery, has_data_storage, weight_kg, warranty_months, plus original_price, donation_eligible, recyclable, carbon factors) and `product_data/recalled_skus.csv` (sku, recall_date, recall_reason). `has_battery` is carried but no v1 rule uses it.
 
 ## Open items
-- `unit_economics.csv` (resale, refurb cost, demand) is not in the data folder; the old file of that name held the returns JSON, now `returns.json`.
+- `product_data/unit_economics.csv` is a synthetic file generated to match the answer key; replace it when the data lead supplies the real one (column names are assumed, see `docs/CONTRACT.md`).
 - The spec's worked example (GAD-1042, grade "C" with an R07 reason) is inconsistent: GAD-1042 isn't in the catalog, and a grade of C would not trigger R07.
 - `recalled_skus.csv` has one SKU (GAD-1017).

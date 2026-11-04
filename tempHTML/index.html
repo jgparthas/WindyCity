@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cosmic Mart Return order queue</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <header class="app-header">
@@ -22,7 +22,7 @@
 
       <div id="side-list">
         <div class="controls">
-          <label class="field"><span>Search</span><input type="search" id="f-search" placeholder="ID, product, category, reason, notes"></label>
+          <label class="field"><span>Search</span><input type="search" id="f-search" placeholder="ID, product, category, reason, notes, rule"></label>
           <div class="field">
             <label for="f-sort">Sort by</label>
             <div class="sort-row">
@@ -32,7 +32,7 @@
           </div>
           <div class="two">
             <label class="field"><span>Destination</span><select id="f-dest"></select></label>
-            <label class="field"><span>Flag</span><select id="f-flag"></select></label>
+            <label class="field"><span>Rule Gate</span><select id="f-gate"></select></label>
           </div>
           <div class="two">
             <label class="field"><span>Category</span><select id="f-cat"></select></label>
@@ -60,6 +60,6 @@
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>

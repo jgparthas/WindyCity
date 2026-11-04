@@ -19,7 +19,8 @@ from pathlib import Path
 
 RULE_VERSION = "v1"
 
-ALL_DESTINATIONS = ["restock", "refurbish", "resell", "donate", "recycle"]
+# "resell" was merged into "restock": a sellable working item goes back to stock.
+ALL_DESTINATIONS = ["restock", "refurbish", "donate", "recycle"]
 CATEGORIES = {"gadgets", "fashion", "home_lifestyle"}
 CHANNELS = {"warehouse", "store"}
 REASON_CODES = {"defective", "damaged_in_transit", "not_as_described",

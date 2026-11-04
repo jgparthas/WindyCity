@@ -135,6 +135,11 @@ input:hover, select:hover { border-color: var(--purple); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { padding: 3px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--white); }
 .chip.urgent { background: var(--red-tint); border-color: var(--red); color: var(--red); font-weight: 700; }
+.plain { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; max-width: 80ch; }
+.plain li { line-height: 1.45; }
+.d-section .table-scroll { border: 1px solid var(--line); border-radius: var(--radius); margin-top: 8px; }
+.d-section table { min-width: 560px; font-size: 0.95rem; }
+.dl small { color: var(--ink-soft); }
 .none { color: var(--ink-soft); }
 .dl { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; margin: 0; max-width: 720px; }
 .dl dt, .dl dd { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); }
@@ -213,7 +218,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .seg-bar b { font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .seg-bar span { font-size: 1rem; font-weight: 600; white-space: nowrap; }
 .restock { background: #4c1d95; color: var(--white); }
-.resell { background: #7c22e8; color: var(--white); }
 .refurbish { background: #a66cf0; color: var(--ink); }
 .donate { background: #cdb0f6; color: var(--ink); }
 .waste { background: var(--red); color: var(--white); }

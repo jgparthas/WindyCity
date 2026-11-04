@@ -91,7 +91,7 @@ Details such as the keyword list and the full assumptions are in [rules_v1.md](r
      "message": "Product has data storage and wipe is not confirmed; wipe required before any resale or donation"}
   ],
   "constraints": {
-    "allowed_destinations": ["restock", "refurbish", "resell", "donate", "recycle"],
+    "allowed_destinations": ["restock", "refurbish", "donate", "recycle"],
     "data_wipe_required": true
   },
   "record": { "...original record, unchanged..." },
@@ -111,6 +111,10 @@ Details such as the keyword list and the full assumptions are in [rules_v1.md](r
 - **Customer notes are untrusted text.** The gate only pattern-matches them against the keyword list. Nothing in the notes is ever followed as an instruction.
 - **Catalog is the source of truth** for category and data storage.
 
+## Connection to the agent
+
+The gate's output object is the agent's input (`GateResult` in `agent/models.py`), with no translation layer. Both read the same `product_data/` files. `pipeline.py` in the repo root runs the full flow, and `agent/tests/test_contract.py` fails if the gate, the data and the agent disagree on a field name or enum. Field dictionary: [../docs/CONTRACT.md](../docs/CONTRACT.md).
+
 ## Changing a rule
 
 1. Edit `rule_gate.py` (rule, keyword list, or severity).
@@ -120,6 +124,6 @@ Details such as the keyword list and the full assumptions are in [rules_v1.md](r
 
 ## Known open items
 
-- The unit-economics file (resale value, refurbishment cost, demand) is not in `product_data/`; the agent needs it, the gate does not.
+- `product_data/unit_economics.csv` is synthetic and was generated to match the answer key; the agent needs it, the gate does not.
 - `recalled_skus.csv` contains only one SKU (GAD-1017).
 - `has_battery` is in the catalog but no v1 rule uses it.

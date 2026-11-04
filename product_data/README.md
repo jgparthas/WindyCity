@@ -56,8 +56,7 @@ DATA_WIPE_REQUIRED_BEFORE_RELEASE
 
 A product with has_data_storage = true must complete data wiping before it can be:
 
-- Restocked
-- Resold
+- Restocked (back to stock, whether as new or open-box)
 - Donated
 - Released after refurbishment
 
@@ -119,21 +118,19 @@ These rules are used to create the expected outcomes in the synthetic evaluation
 
 1. If condition cannot reasonably be determined from the grade or notes -> HUMAN_REVIEW
 
-2. If the item is unused or like new, requires no repair, and demand is not low -> RESTOCK
+2. If the item works (or is unused or like new), requires no repair, and its as-is resale value is at least $50 -> RESTOCK. Restock and resell are one outcome; there is no separate RESELL destination.
 
-3. If the item works, requires no repair, and its as-is resale value is at least $50 -> RESELL
+3. If refurbishment cost is no more than 50% of post-refurbishment value, net recovery is at least $75, and demand is not low -> REFURBISH
 
-4. If refurbishment cost is no more than 50% of post-refurbishment value, net recovery is at least $75, and demand is not low -> REFURBISH
+4. If refurbishment cost is greater than 50% and no more than 100% of post-refurbishment value -> HUMAN_REVIEW
 
-5. If refurbishment cost is greater than 50% and no more than 100% of post-refurbishment value -> HUMAN_REVIEW
+5. If refurbishment otherwise qualifies but inventory demand is low -> HUMAN_REVIEW
 
-6. If refurbishment otherwise qualifies but inventory demand is low -> HUMAN_REVIEW
+6. If the item works, its as-is value is under $50, and it is donation eligible -> DONATE
 
-7. If the item works, its as-is value is under $50, and it is donation eligible -> DONATE
+7. If donation eligibility is unknown when donation would otherwise be recommended -> HUMAN_REVIEW
 
-8. If donation eligibility is unknown when donation would otherwise be recommended -> HUMAN_REVIEW
-
-9. Otherwise, including uneconomic repairs or non-functional products without a better recovery path -> RECYCLE
+8. Otherwise, including uneconomic repairs or non-functional products without a better recovery path -> RECYCLE
 
 These are prototype labeling rules used to create an explainable evaluation set. They are not presented as confirmed Cosmic Mart business policies.
 
@@ -151,8 +148,7 @@ This simplified baseline is used only to compare prototype outcomes. It is not p
 
 Expected destination coverage:
 
-- RESTOCK: 3
-- RESELL: 4
+- RESTOCK: 7
 - REFURBISH: 6
 - DONATE: 3
 - RECYCLE: 5
@@ -223,7 +219,7 @@ Refurbishment economics appear favorable, but inventory demand is low. Expected 
 
 ## Value Summary - Synthetic Prototype Results
 
-- 16 of 32 returns receive a second life through Restock, Resell, Refurbish, or Donate.
+- 16 of 32 returns receive a second life through Restock, Refurbish, or Donate.
 - 5 additional returns are routed to Recycle.
 - Under the prototype definition, 21 of 32 returns are kept out of landfill.
 - 11 of 32 returns are routed to a human: 4 Hazard Review cases and 7 Human Review cases.

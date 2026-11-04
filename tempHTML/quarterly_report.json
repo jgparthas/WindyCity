@@ -1,6 +1,6 @@
 {
   "sample_data": true,
-  "note": "Synthetic sample figures sized for a retailer with 144 million customers. Not actual Cosmic Mart results. In Q2 and Q3 2026 there was no agent or software: 89% of returns went to a waste plant and 11% were resold. The agent system went live in Q4 2026.",
+  "note": "Synthetic sample figures sized for a retailer with 144 million customers. Not actual Cosmic Mart results. In Q2 and Q3 2026 there was no agent or software: 89% of returns went to a waste plant and 11% were resold (restocked). The agent system went live in Q4 2026. The destination 'resell' was merged into 'restock' to match the Rule Gate and agent, so the restock share includes former resell figures. 'waste' is the pre-agent disposal bucket; the agent's 'recycle' destination is not shown separately in this sample.",
   "units": {
     "money_saved": "USD",
     "carbon_emissions": "kg",
@@ -17,11 +17,10 @@
       "carbon_emissions_kg": 16800000,
       "waste_disposed_lbs": 16590000,
       "disposition_breakdown_pct": {
-        "resell": 11,
         "refurbish": 0,
         "donate": 0,
         "waste": 89,
-        "restock": 0
+        "restock": 11
       }
     },
     {
@@ -33,11 +32,10 @@
       "carbon_emissions_kg": 17700000,
       "waste_disposed_lbs": 17280000,
       "disposition_breakdown_pct": {
-        "resell": 9,
         "refurbish": 0,
         "donate": 0,
         "waste": 91,
-        "restock": 0
+        "restock": 9
       }
     },
     {
@@ -49,11 +47,10 @@
       "carbon_emissions_kg": 219700000,
       "waste_disposed_lbs": 1615000,
       "disposition_breakdown_pct": {
-        "resell": 28,
         "refurbish": 24,
         "donate": 11,
         "waste": 5,
-        "restock": 32
+        "restock": 60
       }
     }
   ]

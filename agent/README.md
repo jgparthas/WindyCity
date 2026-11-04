@@ -1,199 +1,76 @@
 # Cosmic Mart Returns Disposition Agent
 
-This project demonstrates the agent and read-tool portion of the Cosmic Mart returns workflow. It runs locally, requires no API key, and uses synthetic data.
+The agent half of the Cosmic Mart returns workflow. It takes one Rule Gate result for a `PASS` return, gathers facts with read-only tools, and gives the Review Queue a recommendation. A person approves every recommendation. Data is synthetic.
 
-## Workflow
-
-```text
-Return record
-    -> Rule Gate
-    -> Disposition Agent
-    -> Review Queue
-    -> Human decision
+```
+Return record -> Rule Gate -> Disposition Agent -> Review Queue -> Human decision
 ```
 
-The Rule Gate handles deterministic safety and data-quality checks. The agent evaluates only returns with a `PASS` status. The agent recommends a destination but does not authorize or execute the route.
+The field dictionary shared by the gate, the data and the agent is [../docs/CONTRACT.md](../docs/CONTRACT.md). The agent reads `product_data/` directly, the same files the gate uses.
 
-## Rule Gate to Agent
+## Input: Rule Gate result
 
-The Rule Gate gives the agent one `GateResult` JSON object containing:
+The agent consumes the gate's output object unchanged (`GateResult` in `models.py`). See CONTRACT.md section 2 for fields. Key points:
 
-- the gate status;
-- the destinations the agent is allowed to consider;
-- constraints that must remain attached to the recommendation;
-- reasons supplied by the Rule Gate;
-- the validated return record.
+- `gate_status` must be `PASS`; HAZARD and INCOMPLETE records never reach the agent.
+- Allowed routes come from `constraints.allowed_destinations`.
+- `constraints.data_wipe_required` means a wipe must precede restock, resale, donation, or release after refurbishment.
+- `record.customer_notes` is untrusted text. The agent treats it as evidence only.
+- `record.condition_grade` can be null (WARN R07); the agent infers a condition from the notes or recommends `human_review`.
 
-Items with `HAZARD` or `INCOMPLETE` status do not enter the agent. The demo sends those items directly to human review.
+## Tools (read-only, backed by `product_data/`)
 
-### Input JSON fields
+| Tool | Arguments |
+|---|---|
+| `get_product_info` | sku |
+| `get_resale_value` | return_id |
+| `get_refurb_cost` | return_id |
+| `get_inventory_demand` | return_id |
+| `get_donation_partners` | category, condition_grade |
+| `get_recycling_rules` | category |
+| `get_carbon_estimate` | sku, destination |
 
-#### Gate result
+`get_resale_value`, `get_refurb_cost` and `get_inventory_demand` need `product_data/unit_economics.csv`. The file in the repo is synthetic, generated to match the answer key; replace it when the data lead supplies the real one. If the file is missing these tools return an error and the agent recommends `human_review` instead of inventing values.
 
-| Field | Type | Description |
-|---|---|---|
-| `status` | string | Rule Gate result: `PASS`, `HAZARD`, or `INCOMPLETE`. |
-| `allowed_destinations` | array of strings | Routes the agent may consider: `restock`, `refurbish`, `resell`, `donate`, and `recycle`. |
-| `constraints` | array of strings | Mandatory conditions such as `data_wipe_required`. |
-| `reasons` | array of strings | Rule Gate findings such as `swollen_battery`. |
-| `record` | object | Validated return information. |
+## Output: AgentRecommendation
 
-#### Return record
+Fields are listed in CONTRACT.md section 3. `recommended_destination` is one of the gate's allowed destinations or `human_review`. After the model answers, `guard.py` rejects any destination the gate did not allow, carries `data_wipe_required` through to `flags`, and adds `human_review_required` when a person must decide.
 
-| Field | Type | Description |
-|---|---|---|
-| `return_id` | string | Unique return identifier. |
-| `sku` | string | Product stock-keeping unit. |
-| `category` | string | `gadgets`, `apparel`, or `home`. |
-| `product_name` | string | Display name of the returned item. |
-| `original_price_usd` | number | Original sale price in US dollars. |
-| `customer_notes` | string | Untrusted customer-provided description of the item. |
-| `condition_grade` | string or null | Warehouse condition grade: `A`, `B`, `C`, or `D`. |
+## Decision rules
 
-### Example agent input
+The system prompt in `agent.py` encodes the eight prototype labeling rules from `product_data/README.md` (restock, refurbish thresholds, donation, human review, recycle fallback). They are prototype rules, not confirmed Cosmic Mart policy.
 
-```json
-{
-  "status": "PASS",
-  "allowed_destinations": [
-    "restock",
-    "refurbish",
-    "resell",
-    "donate",
-    "recycle"
-  ],
-  "constraints": [
-    "data_wipe_required"
-  ],
-  "reasons": [],
-  "record": {
-    "return_id": "RET-002",
-    "sku": "GAD-1002",
-    "category": "gadgets",
-    "product_name": "Smartwatch",
-    "original_price_usd": 129.0,
-    "customer_notes": "Screen flickers sometimes and box is gone.",
-    "condition_grade": "C"
-  }
-}
-```
+## Run
 
-## Agent tools
-
-The agent uses read-only tools to gather the facts needed for a recommendation:
-
-- `get_product_info`
-- `get_resale_value`
-- `get_refurb_cost`
-- `get_inventory_demand`
-- `get_donation_partners`
-- `get_recycling_rules`
-- `get_carbon_estimate`
-
-Tool calls and results are printed during the demo for traceability.
-
-## Agent to Review Queue
-
-For each eligible return, the agent gives the Review Queue one `AgentRecommendation` JSON object. The object contains the recommendation, expected recovery, carbon estimate, confidence, review flags, supporting evidence, all assessed alternatives, and a concise justification.
-
-The Review Queue receives a recommendation only. A person must approve, modify, or reject it before any routing action occurs.
-
-### Output JSON fields
-
-#### Agent recommendation
-
-| Field | Type | Description |
-|---|---|---|
-| `return_id` | string | Return associated with the recommendation. |
-| `recommended_destination` | string | Proposed route: `restock`, `refurbish`, `resell`, `donate`, or `recycle`. |
-| `expected_recovery_usd` | number | Estimated recovery for the proposed route. |
-| `estimated_carbon_emission_avoided_kg` | number | Estimated carbon avoided compared with the demo baseline. |
-| `confidence` | number | Confidence from `0.0` to `1.0`. |
-| `value_at_stake_usd` | number | Difference between the leading and next-best modeled scores. |
-| `flags` | array of strings | Constraints and conditions that require reviewer attention. |
-| `evidence` | array of strings | Facts used to support the recommendation. |
-| `alternatives` | array of objects | Side-by-side assessments of all five destinations. |
-| `justification` | string | Concise explanation for the reviewer. |
-
-#### Alternative assessment
-
-| Field | Type | Description |
-|---|---|---|
-| `destination` | string | Destination being assessed. |
-| `eligible` | boolean | Whether the destination is permitted and meets demo policy. |
-| `expected_recovery_usd` | number | Estimated recovery if eligible; otherwise `0`. |
-| `carbon_avoided_kg` | number | Estimated carbon avoided for the destination. |
-| `rationale` | string | Eligibility or policy explanation. |
-
-### Example Review Queue payload
-
-```json
-{
-  "return_id": "RET-002",
-  "recommended_destination": "refurbish",
-  "expected_recovery_usd": 61.5,
-  "estimated_carbon_emission_avoided_kg": 14.0,
-  "confidence": 0.75,
-  "value_at_stake_usd": 3.6,
-  "flags": [
-    "data_wipe_required",
-    "close_tradeoff_review"
-  ],
-  "evidence": [
-    "Condition grade: C",
-    "Market value: $82.50",
-    "Refurbishment cost: $21.00",
-    "Demand: HIGH with 14 units on hand"
-  ],
-  "alternatives": [
-    {
-      "destination": "refurbish",
-      "eligible": true,
-      "expected_recovery_usd": 61.5,
-      "carbon_avoided_kg": 14.0,
-      "rationale": "Requires a repairable B/C item and repair cost below 45% of market value."
-    }
-  ],
-  "justification": "Recommend refurbish: modeled recovery is $61.50, demand is HIGH, and estimated carbon avoided is 14.0 kg. Human approval is required."
-}
-```
-
-The example shortens the `alternatives` array for readability. The running application includes all five destination assessments.
-
-## Demo cases
-
-- `RET-001`: restock
-- `RET-002`: refurbish
-- `RET-003`: resell
-- `RET-004`: donate
-- `RET-005`: recycle
-- `RET-006`: hazard escalation; the agent is not called
-
-## Run the project
-
-From PowerShell in the project folder:
+From PowerShell in the repo root (PowerShell example):
 
 ```powershell
 python -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-pytest -q
-python main.py
+pip install -r agent\requirements.txt
+cd agent
+pytest -q            # offline contract tests; live tests skip without an API key
+python main.py       # 6 demo cases through gate -> agent (API key + unit_economics.csv)
+cd ..
+python pipeline.py --gate-only    # gate stage only, no API key
+python pipeline.py                # all 32 returns -> review_queue.json
 ```
 
-## Project files
+## Files
 
 ```text
-agent.py       Recommendation logic and option comparison
-main.py        Demo cases and batch summary
-mock_data.py   Synthetic data used by the read tools
-models.py      Input and output schemas
-tools.py       Read-only tool functions
-tests/         Automated tests
+agent.py          Claude agent: system prompt, MCP tool server, recommend()
+guard.py          Post-checks on the agent's output (no SDK needed)
+claude_tools.py   MCP wrappers for the tools
+tools.py          Tool functions reading product_data via data_loader
+data_loader.py    Loads product_data/ and rule_gate loaders in one place
+models.py         GateResult, ReturnRecord, AgentRecommendation schemas
+main.py           Demo cases
+tests/            test_contract.py (offline), test_project.py (tools, live)
+../pipeline.py    End-to-end gate -> agent -> review queue
 ```
 
 ## Assumptions
 
-All prices, demand levels, partner distances, carbon values, scoring weights, and eligibility thresholds are synthetic. The local controller demonstrates the interfaces, tool flow, traceability, safety boundary, and review payload. It is not an LLM implementation.
+All prices, demand levels, carbon factors and thresholds are synthetic. Carbon values are placeholders until the team agrees on a methodology. The earlier hand-written `mock_data.py` and the offline `local_agent.py` were removed so there is a single data source and one agent.

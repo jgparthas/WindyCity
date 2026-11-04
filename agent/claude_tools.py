@@ -1,3 +1,4 @@
+"""MCP wrappers that expose tools.py to the Claude agent."""
 import json
 from typing import Any
 
@@ -15,157 +16,88 @@ from tools import (
 
 
 def _result(data: Any) -> dict[str, Any]:
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": json.dumps(data),
-            }
-        ]
-    }
+    return {"content": [{"type": "text", "text": json.dumps(data)}]}
 
 
 def _error(message: str) -> dict[str, Any]:
-    return {
-        "content": [
-            {
-                "type": "text",
-                "text": message,
-            }
-        ],
-        "isError": True,
-    }
+    return {"content": [{"type": "text", "text": message}], "isError": True}
+
+
+def _call(fn, *args):
+    try:
+        return _result(fn(*args))
+    except ValueError as error:  # includes data_loader.MissingDataError
+        return _error(str(error))
 
 
 @tool(
     "get_product_info",
-    "Get trusted catalog information for a product SKU.",
+    "Get trusted catalog facts for a SKU: category, price, warranty, "
+    "has_battery, has_data_storage, weight_kg, donation_eligible "
+    "(null = unknown, not false), recyclable.",
     {"sku": str},
 )
-async def product_info(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(get_product_info(args["sku"]))
-    except ValueError as error:
-        return _error(str(error))
+async def product_info(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_product_info, args["sku"])
 
 
 @tool(
     "get_resale_value",
-    "Get the estimated resale value for a SKU and condition grade.",
-    {
-        "sku": str,
-        "condition_grade": str,
-    },
+    "Get the as-is resale value of this returned unit, by return_id.",
+    {"return_id": str},
 )
-async def resale_value(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_resale_value(
-                args["sku"],
-                args["condition_grade"],
-            )
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def resale_value(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_resale_value, args["return_id"])
 
 
 @tool(
     "get_refurb_cost",
-    "Get the estimated refurbishment cost for a product.",
-    {
-        "sku": str,
-        "condition_grade": str,
-    },
+    "Get the refurbishment cost and post-refurbishment value of this "
+    "returned unit, by return_id.",
+    {"return_id": str},
 )
-async def refurb_cost(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_refurb_cost(
-                args["sku"],
-                args["condition_grade"],
-            )
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def refurb_cost(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_refurb_cost, args["return_id"])
 
 
 @tool(
     "get_inventory_demand",
-    "Get current demand and inventory information for a SKU.",
-    {"sku": str},
+    "Get inventory demand (HIGH, MEDIUM, LOW) for this returned unit, "
+    "by return_id.",
+    {"return_id": str},
 )
-async def inventory_demand(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_inventory_demand(args["sku"])
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def inventory_demand(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_inventory_demand, args["return_id"])
 
 
 @tool(
     "get_donation_partners",
-    "Find Cosmic Nexus partners that accept an item.",
-    {
-        "category": str,
-        "condition_grade": str,
-    },
+    "Find Cosmic Nexus donation partners whose category and minimum "
+    "condition rules the item meets. Includes each partner's "
+    "data_device_policy.",
+    {"category": str, "condition_grade": str},
 )
-async def donation_partners(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_donation_partners(
-                args["category"],
-                args["condition_grade"],
-            )
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def donation_partners(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(
+        get_donation_partners, args["category"], args["condition_grade"]
+    )
 
 
 @tool(
     "get_recycling_rules",
-    "Get recycling requirements for a product category.",
+    "Get recycling requirements for a category (gadgets, fashion, "
+    "home_lifestyle, or hazard).",
     {"category": str},
 )
-async def recycling_rules(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_recycling_rules(args["category"])
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def recycling_rules(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_recycling_rules, args["category"])
 
 
 @tool(
     "get_carbon_estimate",
-    "Get estimated carbon avoided for a destination and category.",
-    {
-        "destination": str,
-        "category": str,
-    },
+    "Get placeholder carbon avoided (kg CO2e) for a SKU and destination "
+    "(restock, refurbish, donate, recycle).",
+    {"sku": str, "destination": str},
 )
-async def carbon_estimate(
-    args: dict[str, Any],
-) -> dict[str, Any]:
-    try:
-        return _result(
-            get_carbon_estimate(
-                args["destination"],
-                args["category"],
-            )
-        )
-    except ValueError as error:
-        return _error(str(error))
+async def carbon_estimate(args: dict[str, Any]) -> dict[str, Any]:
+    return _call(get_carbon_estimate, args["sku"], args["destination"])

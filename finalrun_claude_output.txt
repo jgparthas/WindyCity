@@ -1,0 +1,29 @@
+The dashboard now reads the pipeline's output directly and uses the same field names as the rule gate and agent. A scripted click test in headless Edge passed 19 of 19 checks with 0 JavaScript errors. The agent's offline tests also pass: 51 passed, 2 skipped. The dashboard works end to end. I ran the test only on a scratch copy of the site, and the repo files themselves are untouched by it.
+
+What changed
+
+Pipeline output: pipeline.py now includes each return's full record in every queue entry. It writes to tempHTML/queue.json by default, and evaluate_queue.py reads from there.
+queue.json contents: it holds the real output of the earlier live run, with each record added from returns.json. This made no new agent calls. It replaces the old sample data, which used names like product, category: wearable and resell.
+script.js: it uses the shared names and handles returns the rule gate stopped.
+Gate-stopped returns: they show the gate's reasons instead of agent figures. They can only go to human review, and the button reads "Confirm human review".
+Destination edit: the choices are the gate's allowed destinations plus human review. Changing a destination shows the agent's own figures for that option.
+Detail panel: it shows the rule gate result, the options the agent compared, the evidence, the customer notes (marked untrusted), and the date as written (local time).
+Filter and keys: the old "Flag" filter became a "Rule Gate" filter (passed, hazard, incomplete). RET-2001 appears twice on purpose, so rows are keyed on test_case_id.
+Removed: resell, the invented weight field, and the old hazard flag names.
+quarterly_report.json: resell is merged into restock, and each quarter still totals 100%. The waste bucket stays as the pre-agent disposal share.
+Docs and tests: docs/CONTRACT.md gained a dashboard section with the field mapping. tempHTML/README.md was empty and now has run steps. New contract tests check that queue.json and the report use the shared vocabulary.
+What the click test covered
+
+Loading: 32 returns load with 0 approved.
+Editing: the options are the allowed destinations plus human review, and a changed destination shows its own figures.
+Approve and reopen: counts go 32/0, then 31/1, then back to 32/0.
+Filters and search: HAZARD gives 4 returns, INCOMPLETE gives 3, restock gives 7, and searching "R06" finds 8.
+Gate-stopped rows: they show "Agent not run" with a single human-review option.
+Duplicate IDs: both RET-2001 rows work.
+Reports: they render without "Resell".
+Things to know
+
+Deleted file: tempHTML/CLAUDE.md shows as deleted in git status. I didn't delete it, and I read its rules from git history. Restore it with git checkout -- tempHTML/CLAUDE.md if you want it back.
+Reports are sample data: the pipeline doesn't produce quarterly figures. The agent's recycle destination has no row in the sample report, and I didn't invent numbers for it.
+Approvals aren't saved: approvals and edits last only until the page is reloaded. I added no saving, as the original instructions said.
+Not committed: nothing is committed.

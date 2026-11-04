@@ -1,23 +1,35 @@
 (function () {
   'use strict';
 
+  /* Data contract: queue.json is the output of pipeline.py (docs/CONTRACT.md,
+     section 4). Each entry is
+       { return_id, test_case_id, needs_human_review, record, gate,
+         recommendation | null, agent_error | null }
+     and every name below (gate_status, recommended_destination,
+     expected_recovery_usd, estimated_carbon_emission_avoided_kg, ...) is the
+     same name the Rule Gate and the agent use. normalize() only flattens an
+     entry for display; it renames nothing except record.product_name ->
+     product and record.condition_grade -> condition for the list views. */
+
   const PAGE = 10;
-  const DEST_ORDER = ['restock', 'refurbish', 'resell', 'donate', 'recycle'];
-  const URGENT_FLAGS = ['swollen_battery', 'hazmat_handling'];
+  // Same values as rule_gate.ALL_DESTINATIONS plus the agent's human_review.
+  const DEST_ORDER = ['restock', 'refurbish', 'donate', 'recycle', 'human_review'];
+  const GATE_ORDER = ['PASS', 'HAZARD', 'INCOMPLETE'];
+  const nz = v => (v == null ? -Infinity : v);
   const SORTS = {
     returned_at: { label: 'Date received', get: r => Date.parse(r.returned_at) },
     return_id: { label: 'Return ID', get: r => r.return_id },
     product: { label: 'Product', get: r => r.product.toLowerCase() },
-    expected_recovery_usd: { label: 'Expected recovery', get: r => r.expected_recovery_usd },
-    estimated_carbon_emission_avoided_kg: { label: 'Carbon impact', get: r => r.estimated_carbon_emission_avoided_kg },
-    confidence: { label: 'Confidence', get: r => r.confidence },
-    value_at_stake_usd: { label: 'Value at stake', get: r => r.value_at_stake_usd }
+    expected_recovery_usd: { label: 'Expected recovery', get: r => nz(r.expected_recovery_usd) },
+    estimated_carbon_emission_avoided_kg: { label: 'Carbon impact', get: r => nz(r.estimated_carbon_emission_avoided_kg) },
+    confidence: { label: 'Confidence', get: r => nz(r.confidence) },
+    value_at_stake_usd: { label: 'Value at stake', get: r => nz(r.value_at_stake_usd) }
   };
 
-  const blank = () => ({ search: '', dest: '', cat: '', cond: '', flag: '', sort: 'returned_at', dir: 'desc', shown: PAGE, key: '' });
+  const blank = () => ({ search: '', dest: '', cat: '', cond: '', gate: '', sort: 'returned_at', dir: 'desc', shown: PAGE, key: '' });
   const state = {
     report: null,
-    returns: [], destinations: [], categories: [], conditions: [], flags: [],
+    returns: [], destinations: [], categories: [], conditions: [],
     tab: 'queue',
     sel: { queue: null, approved: null },
     lists: { queue: blank(), approved: blank() }
@@ -29,33 +41,84 @@
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const label = s => String(s).replace(/_/g, ' ');
   const unique = arr => Array.from(new Set(arr)).sort();
-  const money = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const moneyWhole = n => '$' + Math.round(n).toLocaleString('en-US');
-  const num1 = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const pct = c => Math.round(c * 100) + '%';
-  const fmtDate = iso => new Date(iso).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
-  const quarterOf = iso => { const d = new Date(iso); return 'Q' + (Math.floor(d.getUTCMonth() / 3) + 1) + ' ' + d.getUTCFullYear(); };
-  const byId = id => state.returns.find(r => r.return_id === id);
+  const money = n => (n == null ? '—' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const num1 = n => (n == null ? '—' : Number(n).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+  const pct = c => (c == null ? '—' : Math.round(c * 100) + '%');
+  // received_at is local receiving-site time with no timezone suffix, so show it as written.
+  const fmtDate = iso => new Date(iso).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const condLabel = c => (c === 'ungraded' ? 'Ungraded' : 'Grade ' + c);
+  const destLabel = d => cap(label(d));
+  const gateLabel = g => ({ PASS: 'Passed the Rule Gate', HAZARD: 'Stopped: hazard', INCOMPLETE: 'Stopped: incomplete data' }[g] || g);
+  const byId = id => state.returns.find(r => r.uid === id);
   const isList = () => state.tab !== 'reports';
 
   /* ---------- Load ---------- */
+  function normalize(e, i) {
+    const rec = e.record, g = e.gate, a = e.recommendation;
+    const dest = a ? a.recommended_destination : g.proposed_destination;
+    return {
+      uid: e.test_case_id || (e.return_id + '#' + i),
+      return_id: e.return_id,
+      test_case_id: e.test_case_id,
+      status: 'queue',
+      sku: rec.sku,
+      product: rec.product_name,
+      category: rec.category,
+      condition: rec.condition_grade || 'ungraded',
+      return_reason: rec.return_reason_code,
+      returned_at: rec.received_at,
+      customer_notes: rec.customer_notes,
+      gate_status: g.gate_status,
+      gate_reasons: g.reasons,
+      allowed_destinations: g.constraints.allowed_destinations,
+      data_wipe_required: g.constraints.data_wipe_required,
+      recommended_destination: dest,
+      original_destination: dest,
+      expected_recovery_usd: a ? a.expected_recovery_usd : null,
+      estimated_carbon_emission_avoided_kg: a ? a.estimated_carbon_emission_avoided_kg : null,
+      confidence: a ? a.confidence : null,
+      value_at_stake_usd: a ? a.value_at_stake_usd : null,
+      needs_review: a ? a.needs_review : true,
+      flags: a ? a.flags.slice() : [],
+      evidence: a ? a.evidence : [],
+      alternatives: a ? a.alternatives : [],
+      justification: a ? a.justification : g.reasons.map(x => x.message).join(' '),
+      agent_error: e.agent_error
+    };
+  }
+
+  // Destinations an employee may choose for a return: what the gate allowed,
+  // plus human_review. A gate-stopped return can only go to human_review.
+  const optionsFor = r => DEST_ORDER.filter(d => d === 'human_review' || r.allowed_destinations.includes(d));
+
+  // Figures shown for the current destination. If the employee changed it, use the
+  // agent's own assessment of that option; otherwise the agent's headline figures.
+  function figures(r) {
+    if (r.recommended_destination !== r.original_destination) {
+      const alt = r.alternatives.find(x => x.destination === r.recommended_destination);
+      if (alt) return { recovery: alt.expected_recovery_usd, carbon: alt.carbon_avoided_kg, assessed: true };
+      return { recovery: null, carbon: null, assessed: false };
+    }
+    return { recovery: r.expected_recovery_usd, carbon: r.estimated_carbon_emission_avoided_kg, assessed: true };
+  }
+
   const getJson = url => fetch(url).then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
   Promise.all([getJson('queue.json'), getJson('quarterly_report.json').catch(() => null)])
     .then(([data, report]) => {
       state.report = report;
-      state.returns = data.map(r => ({ ...r, status: r.status === 'approved' ? 'approved' : 'queue', original_destination: r.recommended_destination }));
-      const dests = unique(state.returns.map(r => r.recommended_destination));
-      state.destinations = DEST_ORDER.filter(d => dests.includes(d)).concat(dests.filter(d => !DEST_ORDER.includes(d)));
+      state.returns = data.map(normalize);
+      const dests = state.returns.map(r => r.recommended_destination);
+      state.destinations = DEST_ORDER.filter(d => dests.includes(d)).concat(unique(dests.filter(d => !DEST_ORDER.includes(d))));
       state.categories = unique(state.returns.map(r => r.category));
       state.conditions = unique(state.returns.map(r => r.condition));
-      state.flags = unique(state.returns.flatMap(r => r.flags));
       init();
     })
     .catch(() => {
       const box = $('#load-error');
       box.hidden = false;
       box.innerHTML = '<strong>Could not load queue.json.</strong> Browsers block reading local files when this page is opened directly. ' +
-        'Start a local server in this folder, for example <code>python -m http.server 8000</code>, then open <code>http://localhost:8000</code>.';
+        'Start a local server in this folder, for example <code>python -m http.server 8000</code>, then open <code>http://localhost:8000</code>. ' +
+        'queue.json is written by <code>python pipeline.py</code>.';
       $('#side-list').hidden = true;
     });
 
@@ -92,16 +155,16 @@
 
   function setupControls() {
     const opt = (v, t) => '<option value="' + esc(v) + '">' + esc(t) + '</option>';
-    $('#f-dest').innerHTML = opt('', 'Any destination') + state.destinations.map(d => opt(d, cap(d))).join('');
-    $('#f-flag').innerHTML = opt('', 'Any flag') + opt('__none', 'No flags') + state.flags.map(f => opt(f, cap(label(f)))).join('');
-    $('#f-cat').innerHTML = opt('', 'Any category') + state.categories.map(c => opt(c, cap(c))).join('');
-    $('#f-cond').innerHTML = opt('', 'Any condition') + state.conditions.map(c => opt(c, cap(c))).join('');
+    $('#f-dest').innerHTML = opt('', 'Any destination') + state.destinations.map(d => opt(d, destLabel(d))).join('');
+    $('#f-gate').innerHTML = opt('', 'Any result') + GATE_ORDER.map(g => opt(g, gateLabel(g))).join('');
+    $('#f-cat').innerHTML = opt('', 'Any category') + state.categories.map(c => opt(c, cap(label(c)))).join('');
+    $('#f-cond').innerHTML = opt('', 'Any condition') + state.conditions.map(c => opt(c, condLabel(c))).join('');
     $('#f-sort').innerHTML = Object.keys(SORTS).map(k => opt(k, SORTS[k].label)).join('');
 
     const bind = (id, key, evt) => $(id).addEventListener(evt, e => { state.lists[state.tab][key] = e.target.value; if (key === 'sort') syncControls(); render(); });
     bind('#f-search', 'search', 'input');
     bind('#f-dest', 'dest', 'change');
-    bind('#f-flag', 'flag', 'change');
+    bind('#f-gate', 'gate', 'change');
     bind('#f-cat', 'cat', 'change');
     bind('#f-cond', 'cond', 'change');
     bind('#f-sort', 'sort', 'change');
@@ -122,7 +185,7 @@
     const st = state.lists[state.tab];
     $('#f-search').value = st.search;
     $('#f-dest').value = st.dest;
-    $('#f-flag').value = st.flag;
+    $('#f-gate').value = st.gate;
     $('#f-cat').value = st.cat;
     $('#f-cond').value = st.cond;
     $('#f-sort').value = st.sort;
@@ -139,10 +202,11 @@
       if (st.dest && r.recommended_destination !== st.dest) return false;
       if (st.cat && r.category !== st.cat) return false;
       if (st.cond && r.condition !== st.cond) return false;
-      if (st.flag === '__none' && r.flags.length) return false;
-      if (st.flag && st.flag !== '__none' && !r.flags.includes(st.flag)) return false;
+      if (st.gate && r.gate_status !== st.gate) return false;
       if (q) {
-        const hay = [r.return_id, r.sku, r.product, r.category, r.condition, r.return_reason, r.recommended_destination, r.justification, r.flags.map(label).join(' ')].join(' ').toLowerCase();
+        const hay = [r.return_id, r.test_case_id, r.sku, r.product, r.category, r.condition, r.return_reason, r.recommended_destination,
+          r.justification, r.customer_notes, r.gate_status, r.gate_reasons.map(x => x.rule_id + ' ' + x.message).join(' '),
+          r.flags.map(label).join(' ')].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -169,9 +233,9 @@
     const all = state.returns.filter(r => r.status === name);
     const rows = visible(name);
 
-    const key = [st.search, st.dest, st.cat, st.cond, st.flag, st.sort, st.dir].join('|');
+    const key = [st.search, st.dest, st.cat, st.cond, st.gate, st.sort, st.dir].join('|');
     if (st.key !== key) { st.key = key; st.shown = PAGE; }
-    if (!rows.some(r => r.return_id === state.sel[name])) state.sel[name] = rows.length ? rows[0].return_id : null;
+    if (!rows.some(r => r.uid === state.sel[name])) state.sel[name] = rows.length ? rows[0].uid : null;
 
     const shown = rows.slice(0, st.shown);
     $('#result').textContent = 'Showing ' + shown.length + ' of ' + rows.length + (rows.length !== all.length ? ' (' + all.length + ' total)' : '');
@@ -183,18 +247,38 @@
       return;
     }
     host.innerHTML = '<ul class="items">' + shown.map((r, i) => {
-      const urgent = r.flags.some(f => URGENT_FLAGS.includes(f));
-      const on = r.return_id === state.sel[name];
-      return '<li><button class="item' + (on ? ' is-selected' : '') + (urgent ? ' urgent' : '') + '" data-act="select" data-id="' + r.return_id + '"' + (on ? ' aria-current="true"' : '') + '>' +
-        '<span class="n">' + (i + 1) + '</span><span class="t">' + esc(r.return_id) + '</span><span class="amt">' + money(r.expected_recovery_usd) + '</span>' +
-        '<span class="s">' + esc(r.product) + ' &middot; ' + esc(r.recommended_destination) + (urgent ? ' &middot; <span class="u">Handle with care</span>' : '') + '</span></button></li>';
+      const urgent = r.gate_status === 'HAZARD';
+      const on = r.uid === state.sel[name];
+      const f = figures(r);
+      const note = r.gate_status === 'HAZARD' ? ' &middot; <span class="u">Hazard: needs a person</span>'
+        : r.gate_status === 'INCOMPLETE' ? ' &middot; <span class="u">Data problem</span>' : '';
+      return '<li><button class="item' + (on ? ' is-selected' : '') + (urgent ? ' urgent' : '') + '" data-act="select" data-id="' + esc(r.uid) + '"' + (on ? ' aria-current="true"' : '') + '>' +
+        '<span class="n">' + (i + 1) + '</span><span class="t">' + esc(r.return_id) + '</span><span class="amt">' + money(f.recovery) + '</span>' +
+        '<span class="s">' + esc(r.product) + ' &middot; ' + esc(label(r.recommended_destination)) + note + '</span></button></li>';
     }).join('') + '</ul>' +
       (rows.length > shown.length ? '<div class="more"><button class="btn btn-ghost" data-act="more">Show ' + Math.min(PAGE, rows.length - shown.length) + ' more</button></div>' : '');
   }
 
   function flagsHtml(flags) {
     if (!flags.length) return '<span class="none">None</span>';
-    return '<div class="chips">' + flags.map(f => '<span class="chip' + (URGENT_FLAGS.includes(f) ? ' urgent' : '') + '">' + esc(cap(label(f))) + '</span>').join('') + '</div>';
+    return '<div class="chips">' + flags.map(f => '<span class="chip' + (/hazard|review|swollen|recall/.test(f) ? ' urgent' : '') + '">' + esc(cap(label(f))) + '</span>').join('') + '</div>';
+  }
+
+  function gateHtml(r) {
+    const sev = { BLOCK: ' urgent', CONSTRAIN: '', WARN: '' };
+    const reasons = r.gate_reasons.length
+      ? '<ul class="plain">' + r.gate_reasons.map(x => '<li><span class="chip' + (sev[x.severity] || '') + '">' + esc(x.rule_id) + ' ' + esc(x.severity.toLowerCase()) + '</span> ' + esc(x.message) + '</li>').join('') + '</ul>'
+      : '<p>No rules fired.</p>';
+    return '<p><b>' + esc(gateLabel(r.gate_status)) + '</b>' + (r.data_wipe_required ? ' &middot; data wipe required before release' : '') + '</p>' + reasons;
+  }
+
+  function alternativesHtml(r) {
+    if (!r.alternatives.length) return '';
+    return '<div class="d-section"><h3>Options the agent compared</h3><div class="table-scroll"><table><thead><tr><th>Destination</th><th>Allowed</th>' +
+      '<th class="num">Recovery</th><th class="num">Carbon kg</th><th>Why</th></tr></thead><tbody>' +
+      r.alternatives.map(a => '<tr><td>' + esc(destLabel(a.destination)) + (a.destination === r.original_destination ? ' (agent’s pick)' : '') + '</td><td>' + (a.eligible ? 'Yes' : 'No') +
+        '</td><td class="num">' + money(a.expected_recovery_usd) + '</td><td class="num">' + num1(a.carbon_avoided_kg) + '</td><td>' + esc(a.rationale) + '</td></tr>').join('') +
+      '</tbody></table></div></div>';
   }
 
   function renderDetail() {
@@ -208,42 +292,55 @@
     }
     const locked = r.status === 'approved';
     const changed = r.recommended_destination !== r.original_destination;
-    const low = r.flags.includes('low_confidence');
+    const stopped = r.gate_status !== 'PASS';
+    const low = r.confidence != null && (r.confidence < 0.6 || r.needs_review);
     const dest = r.recommended_destination;
+    const f = figures(r);
+    const opts = optionsFor(r);
+    const pick = stopped ? 'Rule Gate’s route' : 'Agent’s pick';
 
-    const segs = state.destinations.map(d =>
-      '<button class="seg" data-act="dest" data-dest="' + esc(d) + '" aria-pressed="' + (d === dest) + '"' + (locked ? ' aria-disabled="true"' : '') + '>' +
-      '<span class="name">' + esc(cap(d)) + '</span>' +
-      (d === r.original_destination ? '<span class="pick">Agent’s pick</span>' : '') + '</button>').join('');
+    const segs = opts.map(d =>
+      '<button class="seg" data-act="dest" data-dest="' + esc(d) + '" aria-pressed="' + (d === dest) + '"' + (locked || opts.length === 1 ? ' aria-disabled="true"' : '') + '>' +
+      '<span class="name">' + esc(destLabel(d)) + '</span>' +
+      (d === r.original_destination ? '<span class="pick">' + pick + '</span>' : '') + '</button>').join('');
 
+    const approveText = stopped ? 'Confirm human review' : 'Approve ' + esc(label(dest));
     let foot;
     if (locked) {
-      foot = '<p>Approved as ' + esc(dest) + '. Reopen to send it back to the queue.</p><div class="btns"><button class="btn" data-act="reopen">Reopen</button></div>';
+      foot = '<p>Approved as ' + esc(label(dest)) + '. Reopen to send it back to the queue.</p><div class="btns"><button class="btn" data-act="reopen">Reopen</button></div>';
     } else if (changed) {
-      foot = '<p>You changed the destination from ' + esc(r.original_destination) + ' to ' + esc(dest) + '.</p><div class="btns">' +
-        '<button class="btn btn-ghost" data-act="reset">Reset to agent’s pick</button><button class="btn" data-act="approve">Approve ' + esc(dest) + '</button></div>';
+      foot = '<p>You changed the destination from ' + esc(label(r.original_destination)) + ' to ' + esc(label(dest)) + '.</p><div class="btns">' +
+        '<button class="btn btn-ghost" data-act="reset">Reset to ' + esc(pick.toLowerCase()) + '</button><button class="btn" data-act="approve">' + approveText + '</button></div>';
+    } else if (stopped) {
+      foot = '<p>The Rule Gate stopped this return before the agent. A person must handle it.</p><div class="btns"><button class="btn" data-act="approve">' + approveText + '</button></div>';
     } else {
       foot = '<p>Approve the agent’s pick, or change it.</p><div class="btns">' +
-        '<button class="btn btn-ghost" data-act="change">Change destination</button><button class="btn" data-act="approve">Approve ' + esc(dest) + '</button></div>';
+        '<button class="btn btn-ghost" data-act="change">Change destination</button><button class="btn" data-act="approve">' + approveText + '</button></div>';
     }
+
+    const conf = r.confidence == null ? '<div class="stat"><div class="label">Agent confidence</div><div class="value">—</div><div class="vs">Agent not run</div></div>' :
+      '<div class="stat"><div class="label">Agent confidence</div><div class="value">' + pct(r.confidence) + '</div><div class="bar" role="img" aria-label="Confidence ' + pct(r.confidence) + '"><i class="' + (low ? 'low' : '') + '" style="width:' + pct(r.confidence) + '"></i></div></div>';
 
     host.innerHTML = '<div class="detail-body">' +
       '<div class="d-title"><h2>' + esc(r.return_id) + '</h2><span class="sku">SKU ' + esc(r.sku) + '</span></div>' +
-      '<p class="d-product"><b>' + esc(r.product) + '</b>, ' + esc(r.category) + ', ' + esc(r.condition) + ' condition</p>' +
+      '<p class="d-product"><b>' + esc(r.product) + '</b>, ' + esc(cap(label(r.category))) + ', ' + esc(condLabel(r.condition)) + '</p>' +
       '<div class="segments' + (locked ? ' locked' : '') + '" role="group" aria-label="Destination">' + segs + '</div>' +
-      (changed && !locked ? '<p class="edit-note">Changed from the agent’s pick. Changes last until you reload the page.</p>' : '') +
+      (changed && !locked ? '<p class="edit-note">Changed from the ' + esc(pick.toLowerCase()) + '. Changes last until you reload the page.' + (f.assessed ? '' : ' The agent did not assess this option, so no figures are shown.') + '</p>' : '') +
       '<div class="stats">' +
-      '<div class="stat"><div class="label">Expected recovery</div><div class="value">' + money(r.expected_recovery_usd) + '</div></div>' +
-      '<div class="stat"><div class="label">Carbon avoided</div><div class="value">' + num1(r.estimated_carbon_emission_avoided_kg) + ' <small>kg CO₂e</small></div></div>' +
+      '<div class="stat"><div class="label">Expected recovery</div><div class="value">' + money(f.recovery) + '</div></div>' +
+      '<div class="stat"><div class="label">Carbon avoided</div><div class="value">' + num1(f.carbon) + ' <small>kg CO₂e</small></div></div>' +
       '<div class="stat"><div class="label">Value at stake</div><div class="value">' + money(r.value_at_stake_usd) + '</div></div>' +
-      '<div class="stat"><div class="label">Agent confidence</div><div class="value">' + pct(r.confidence) + '</div><div class="bar" role="img" aria-label="Confidence ' + pct(r.confidence) + '"><i class="' + (low ? 'low' : '') + '" style="width:' + pct(r.confidence) + '"></i></div></div>' +
-      '</div>' +
-      '<div class="d-section"><h3>Why this route</h3><p>' + esc(r.justification) + '</p></div>' +
+      conf + '</div>' +
+      '<div class="d-section"><h3>' + (stopped ? 'Why it was stopped' : 'Why this route') + '</h3><p>' + esc(r.justification) + '</p>' +
+      (r.agent_error ? '<p class="edit-note">Agent error: ' + esc(r.agent_error) + '</p>' : '') + '</div>' +
+      '<div class="d-section"><h3>Rule Gate</h3>' + gateHtml(r) + '</div>' +
       '<div class="d-section"><h3>Flags</h3>' + flagsHtml(r.flags) + '</div>' +
+      alternativesHtml(r) +
+      (r.evidence.length ? '<div class="d-section"><h3>Evidence</h3><ul class="plain">' + r.evidence.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '') +
       '<div class="d-section"><h3>Return details</h3><dl class="dl">' +
-      '<dt>Return reason</dt><dd>' + esc(r.return_reason) + '</dd>' +
+      '<dt>Return reason</dt><dd>' + esc(cap(label(r.return_reason))) + '</dd>' +
+      '<dt>Customer notes</dt><dd>' + (r.customer_notes ? esc(r.customer_notes) + ' <small>(customer-written, untrusted)</small>' : 'None') + '</dd>' +
       '<dt>Date received</dt><dd>' + esc(fmtDate(r.returned_at)) + '</dd>' +
-      '<dt>Weight</dt><dd>' + num1(r.weight_lbs) + ' lbs</dd>' +
       '<dt>Status</dt><dd>' + (locked ? 'Approved' : 'Waiting for review') + '</dd>' +
       '</dl></div></div>' +
       '<div class="actionbar">' + foot + '</div>';
@@ -265,16 +362,16 @@
     }
     if (!r) return;
     if (act === 'dest') {
-      if (r.status === 'approved' || btn.dataset.dest === r.recommended_destination) return;
+      if (r.status === 'approved' || btn.dataset.dest === r.recommended_destination || !optionsFor(r).includes(btn.dataset.dest)) return;
       r.recommended_destination = btn.dataset.dest;
       render();
       const again = $('.seg[aria-pressed="true"]'); if (again) again.focus();
-      toast(r.return_id + ' destination changed to ' + r.recommended_destination);
+      toast(r.return_id + ' destination changed to ' + label(r.recommended_destination));
     }
     if (act === 'reset') {
       r.recommended_destination = r.original_destination;
       render();
-      toast(r.return_id + ' reset to the agent’s pick');
+      toast(r.return_id + ' reset to ' + (r.gate_status === 'PASS' ? 'the agent’s pick' : 'the Rule Gate’s route'));
     }
     if (act === 'change') { const s = $('.seg[aria-pressed="true"]'); if (s) s.focus(); }
     if (act === 'approve') setStatus(r, 'approved');
@@ -283,11 +380,11 @@
 
   function setStatus(r, status) {
     const from = state.tab;
-    const idx = visible(from).findIndex(x => x.return_id === r.return_id);
+    const idx = visible(from).findIndex(x => x.uid === r.uid);
     r.status = status;
     const after = visible(from);
-    state.sel[from] = after.length ? after[Math.min(idx, after.length - 1)].return_id : null;
-    state.sel[status] = r.return_id;
+    state.sel[from] = after.length ? after[Math.min(idx, after.length - 1)].uid : null;
+    state.sel[status] = r.uid;
     render();
     toast(status === 'approved' ? r.return_id + ' approved and moved to Approved' : r.return_id + ' reopened and moved to To review');
   }
@@ -315,7 +412,6 @@
   // Strip order: kept destinations first, waste last.
   const DISPOSITIONS = [
     { key: 'restock', name: 'Restock', better: 'up' },
-    { key: 'resell', name: 'Resell', better: 'up' },
     { key: 'refurbish', name: 'Refurbish', better: 'up' },
     { key: 'donate', name: 'Donate', better: 'up' },
     { key: 'waste', name: 'Waste', better: 'down' }
