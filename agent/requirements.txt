@@ -1,0 +1,4 @@
+pydantic>=2.7,<3
+pytest>=8,<10
+pytest-asyncio
+claude-agent-sdk
