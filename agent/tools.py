@@ -74,6 +74,9 @@ def get_carbon_estimate(sku, destination):
     row = _require(dl.catalog(), sku, 'SKU')
     if destination in REUSE_DESTINATIONS:
         col = 'carbon_kg_avoided_if_reused'
+    elif destination == 'waste':
+        return {'sku': sku, 'destination': destination,
+                'carbon_avoided_kg': 0.0}
     elif destination == 'recycle':
         col = 'carbon_kg_avoided_if_recycled'
     else:

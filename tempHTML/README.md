@@ -13,7 +13,7 @@ Open http://localhost:8000. Opening `index.html` directly does not work because 
 
 ## Data
 
-- `queue.json` is written by `python pipeline.py` from the repo root (gate, then agent, then queue). It currently holds a real run over the 32 synthetic returns. Field names are the ones the Rule Gate and agent use; see [../docs/CONTRACT.md](../docs/CONTRACT.md) sections 4 and 4b.
+- `queue.json` is written by `python pipeline.py` from the repo root (gate, then agent, then queue). It currently holds a real run over the 64 synthetic returns. Field names are the ones the Rule Gate and agent use; see [../docs/CONTRACT.md](../docs/CONTRACT.md) sections 4 and 4b.
 - `quarterly_report.json` is separate synthetic sample data for the Reports tab. The pipeline does not produce it.
 
 ## What it does

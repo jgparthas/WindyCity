@@ -63,7 +63,7 @@ def test_gate_output_validates_as_agent_input(tc):
 
 def test_pipeline_gate_stage_matches_answer_key():
     queue = asyncio.run(run_pipeline(gate_only=True))
-    assert len(queue) == 32
+    assert len(queue) == 64
     for entry in queue:
         lab = LABELS[entry["test_case_id"]]
         assert entry["gate"]["gate_status"] == lab["expected_gate_status"]
@@ -92,7 +92,7 @@ def test_pipeline_calls_agent_only_for_pass():
     passed = {e["test_case_id"] for e in queue
               if e["gate"]["gate_status"] == "PASS"}
     assert set(seen) == passed
-    assert len(passed) == 25
+    assert len(passed) == 55
     for e in queue:
         assert (e["recommendation"] is not None) == (
             e["gate"]["gate_status"] == "PASS")
@@ -136,6 +136,18 @@ def test_guard_allows_human_review_and_adds_flags():
     assert out.test_case_id == "TC-05"
 
 
+def test_guard_allows_waste_only_when_the_gate_does():
+    gr = GateResult.model_validate(BY_TC["TC-14"])
+    assert "waste" in gr.allowed_destinations  # FSH-3003 is not recyclable
+    assert "recycle" not in gr.allowed_destinations
+    assert enforce_gate(make_rec(gr.return_id, "waste"), gr)
+    with pytest.raises(ValueError):
+        enforce_gate(make_rec(gr.return_id, "recycle"), gr)
+    other = GateResult.model_validate(BY_TC["TC-02"])
+    with pytest.raises(ValueError):
+        enforce_gate(make_rec(other.return_id, "waste"), other)
+
+
 def test_guard_rejects_non_pass_and_mismatched_ids():
     hazard = GateResult.model_validate(BY_TC["TC-19"])
     with pytest.raises(ValueError):
@@ -152,7 +164,7 @@ def test_shipped_economics_covers_every_gated_record_and_matches_key():
     expected recovery for refurbish cases (post-refurb value minus cost)."""
     dl.unit_economics.cache_clear()
     econ = dl.unit_economics()
-    assert len(econ) == 29
+    assert len(econ) == 60
     # TC-22 and TC-24 are stopped by the gate and have no row; TC-23 reuses
     # RET-2001, which belongs to TC-01 (so the key is still unique).
     assert "RET-2022" not in econ and "RET-2024" not in econ
@@ -185,7 +197,7 @@ def test_every_tool_works_for_every_pass_record():
         for dest in rule_gate.ALL_DESTINATIONS:
             tools.get_carbon_estimate(rec["sku"], dest)
         n += 1
-    assert n == 25
+    assert n == 55
 
 
 # ------------------------------------------- dashboard data (queue.json)
@@ -196,7 +208,7 @@ def test_dashboard_queue_json_uses_the_shared_vocabulary():
     from models import ReturnRecord
     path = dl.ROOT / "tempHTML" / "queue.json"
     queue = json.loads(path.read_text(encoding="utf-8"))
-    assert len(queue) == 32
+    assert len(queue) == 64
     expected = {r["record"]["test_case_id"]: r for r in RESULTS}
     for e in queue:
         res = expected[e["test_case_id"]]
@@ -210,7 +222,7 @@ def test_dashboard_queue_json_uses_the_shared_vocabulary():
             r = AgentRecommendation.model_validate(rec)
             allowed = res["constraints"]["allowed_destinations"]
             assert r.recommended_destination in allowed + ["human_review"]
-            assert len(r.alternatives) == 4
+            assert len(r.alternatives) == 5
         else:
             assert rec is None
             assert e["gate"]["proposed_destination"] == "human_review"

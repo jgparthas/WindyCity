@@ -38,7 +38,7 @@ Fields are listed in CONTRACT.md section 3. `recommended_destination` is one of 
 
 ## Decision rules
 
-The system prompt in `agent.py` encodes the eight prototype labeling rules from `product_data/README.md` (restock, refurbish thresholds, donation, human review, recycle fallback). They are prototype rules, not confirmed Cosmic Mart policy.
+The system prompt in `agent.py` encodes the eight prototype labeling rules from `product_data/README.md` (restock, refurbish thresholds, donation, human review, recycle fallback, waste for non-recyclable items). They are prototype rules, not confirmed Cosmic Mart policy.
 
 ## Run
 
@@ -54,7 +54,7 @@ pytest -q            # offline contract tests; live tests skip without an API ke
 python main.py       # 6 demo cases through gate -> agent (API key + unit_economics.csv)
 cd ..
 python pipeline.py --gate-only    # gate stage only, no API key
-python pipeline.py                # all 32 returns -> review_queue.json
+python pipeline.py                # all 64 returns -> review_queue.json
 ```
 
 ## Files

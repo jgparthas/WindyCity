@@ -13,7 +13,7 @@
 
   const PAGE = 10;
   // Same values as rule_gate.ALL_DESTINATIONS plus the agent's human_review.
-  const DEST_ORDER = ['restock', 'refurbish', 'donate', 'recycle', 'human_review'];
+  const DEST_ORDER = ['restock', 'refurbish', 'donate', 'recycle', 'waste', 'human_review'];
   const GATE_ORDER = ['PASS', 'HAZARD', 'INCOMPLETE'];
   const nz = v => (v == null ? -Infinity : v);
   const SORTS = {
@@ -47,7 +47,10 @@
   // received_at is local receiving-site time with no timezone suffix, so show it as written.
   const fmtDate = iso => new Date(iso).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const condLabel = c => (c === 'ungraded' ? 'Ungraded' : 'Grade ' + c);
-  const destLabel = d => cap(label(d));
+  // Display names for destinations whose data value is not the wording shown to people.
+  const DEST_NAMES = { human_review: 'Additional Review' };
+  const destText = d => DEST_NAMES[d] || label(d);
+  const destLabel = d => DEST_NAMES[d] || cap(label(d));
   const gateLabel = g => ({ PASS: 'Passed the Rule Gate', HAZARD: 'Stopped: hazard', INCOMPLETE: 'Stopped: incomplete data' }[g] || g);
   const byId = id => state.returns.find(r => r.uid === id);
   const isList = () => state.tab !== 'reports';
@@ -254,7 +257,7 @@
         : r.gate_status === 'INCOMPLETE' ? ' &middot; <span class="u">Data problem</span>' : '';
       return '<li><button class="item' + (on ? ' is-selected' : '') + (urgent ? ' urgent' : '') + '" data-act="select" data-id="' + esc(r.uid) + '"' + (on ? ' aria-current="true"' : '') + '>' +
         '<span class="n">' + (i + 1) + '</span><span class="t">' + esc(r.return_id) + '</span><span class="amt">' + money(f.recovery) + '</span>' +
-        '<span class="s">' + esc(r.product) + ' &middot; ' + esc(label(r.recommended_destination)) + note + '</span></button></li>';
+        '<span class="s">' + esc(r.product) + ' &middot; ' + esc(destText(r.recommended_destination)) + note + '</span></button></li>';
     }).join('') + '</ul>' +
       (rows.length > shown.length ? '<div class="more"><button class="btn btn-ghost" data-act="more">Show ' + Math.min(PAGE, rows.length - shown.length) + ' more</button></div>' : '');
   }
@@ -299,17 +302,21 @@
     const opts = optionsFor(r);
     const pick = stopped ? 'Rule Gate’s route' : 'Agent’s pick';
 
-    const segs = opts.map(d =>
-      '<button class="seg" data-act="dest" data-dest="' + esc(d) + '" aria-pressed="' + (d === dest) + '"' + (locked || opts.length === 1 ? ' aria-disabled="true"' : '') + '>' +
-      '<span class="name">' + esc(destLabel(d)) + '</span>' +
-      (d === r.original_destination ? '<span class="pick">' + pick + '</span>' : '') + '</button>').join('');
+    // Always show every destination; the ones the Rule Gate does not allow are greyed out and cannot be chosen.
+    const segs = DEST_ORDER.map(d => {
+      const blocked = !opts.includes(d);
+      return '<button class="seg' + (blocked ? ' blocked' : '') + '" data-act="dest" data-dest="' + esc(d) + '" aria-pressed="' + (d === dest) + '"' +
+        (locked || blocked || opts.length === 1 ? ' aria-disabled="true"' : '') + (blocked ? ' disabled' : '') + '>' +
+        '<span class="name">' + esc(destLabel(d)) + '</span>' +
+        (blocked ? '<span class="pick">Blocked by gate</span>' : d === r.original_destination ? '<span class="pick">' + pick + '</span>' : '') + '</button>';
+    }).join('');
 
-    const approveText = stopped ? 'Confirm human review' : 'Approve ' + esc(label(dest));
+    const approveText = stopped ? 'Confirm additional review' : 'Approve ' + esc(destText(dest));
     let foot;
     if (locked) {
-      foot = '<p>Approved as ' + esc(label(dest)) + '. Reopen to send it back to the queue.</p><div class="btns"><button class="btn" data-act="reopen">Reopen</button></div>';
+      foot = '<p>Approved as ' + esc(destText(dest)) + '. Reopen to send it back to the queue.</p><div class="btns"><button class="btn" data-act="reopen">Reopen</button></div>';
     } else if (changed) {
-      foot = '<p>You changed the destination from ' + esc(label(r.original_destination)) + ' to ' + esc(label(dest)) + '.</p><div class="btns">' +
+      foot = '<p>You changed the destination from ' + esc(destText(r.original_destination)) + ' to ' + esc(destText(dest)) + '.</p><div class="btns">' +
         '<button class="btn btn-ghost" data-act="reset">Reset to ' + esc(pick.toLowerCase()) + '</button><button class="btn" data-act="approve">' + approveText + '</button></div>';
     } else if (stopped) {
       foot = '<p>The Rule Gate stopped this return before the agent. A person must handle it.</p><div class="btns"><button class="btn" data-act="approve">' + approveText + '</button></div>';
@@ -366,7 +373,7 @@
       r.recommended_destination = btn.dataset.dest;
       render();
       const again = $('.seg[aria-pressed="true"]'); if (again) again.focus();
-      toast(r.return_id + ' destination changed to ' + label(r.recommended_destination));
+      toast(r.return_id + ' destination changed to ' + destText(r.recommended_destination));
     }
     if (act === 'reset') {
       r.recommended_destination = r.original_destination;

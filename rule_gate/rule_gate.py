@@ -20,7 +20,8 @@ from pathlib import Path
 RULE_VERSION = "v1"
 
 # "resell" was merged into "restock": a sellable working item goes back to stock.
-ALL_DESTINATIONS = ["restock", "refurbish", "donate", "recycle"]
+# "waste" is disposal for items the catalog says cannot be recycled.
+ALL_DESTINATIONS = ["restock", "refurbish", "donate", "recycle", "waste"]
 CATEGORIES = {"gadgets", "fashion", "home_lifestyle"}
 CHANNELS = {"warehouse", "store"}
 REASON_CODES = {"defective", "damaged_in_transit", "not_as_described",
@@ -195,6 +196,8 @@ def evaluate(record, catalog, recalled, seen_ids=None, evaluated_at=None):
             allowed.remove("donate")
         if product.get("recyclable") is False:
             allowed.remove("recycle")
+        else:  # waste is only for items that cannot be recycled
+            allowed.remove("waste")
         wipe = any(r["rule_id"] == "R06" for r in reasons)
 
     return {

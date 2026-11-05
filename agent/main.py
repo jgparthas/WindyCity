@@ -1,7 +1,7 @@
 """Demo: run the README demo cases through Rule Gate -> agent -> review queue.
 
 Run from the agent/ folder:  python main.py
-Needs an API key and product_data/unit_economics.csv. For the full 32-case
+Needs an API key and product_data/unit_economics.csv. For the full 64-case
 run or a gate-only run use ../pipeline.py.
 """
 import asyncio

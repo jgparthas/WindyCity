@@ -18,8 +18,17 @@ GAD-1017,Power Bank 20000mAh,gadgets,49.99,12,true,false,0.40,false,true,3,1
 GAD-1018,Wireless Earbuds,gadgets,159.99,12,true,false,0.06,false,true,3,1
 FSH-3001,Winter Jacket,fashion,179.99,0,false,false,1.20,true,true,15,3
 FSH-3002,Children's Coat,fashion,59.99,0,false,false,0.60,true,true,8,2
-FSH-3003,Running Shoes,fashion,119.99,0,false,false,0.80,true,true,10,2
+FSH-3003,Running Shoes,fashion,119.99,0,false,false,0.80,true,false,10,2
 FSH-3004,Leather Handbag,fashion,89.99,0,false,false,0.90,true,true,12,2
 HOM-4001,Stand Mixer,home_lifestyle,399.99,12,false,false,10.00,true,true,20,4
 HOM-4002,Desk Lamp,home_lifestyle,44.99,12,false,false,1.20,true,true,4,1
 HOM-4003,Office Chair,home_lifestyle,199.99,24,false,false,15.00,,true,25,5
+HOM-4004,Memory Foam Pillow,home_lifestyle,29.99,0,false,false,0.80,false,false,3,0
+HOM-4005,Scented Candle Jar Set,home_lifestyle,34.99,0,false,false,0.90,false,false,2,0
+HOM-4006,Ceramic Dinner Plate Set,home_lifestyle,69.99,0,false,false,4.50,false,false,6,0
+HOM-4007,Foam Yoga Mat,home_lifestyle,39.99,0,false,false,1.10,false,false,3,0
+HOM-4008,Vinyl Shower Curtain,home_lifestyle,24.99,0,false,false,0.60,false,false,2,0
+FSH-3005,Polyester Blend Scarf,fashion,34.99,0,false,false,0.20,false,false,2,0
+FSH-3006,Fast-Fashion Blazer,fashion,79.99,0,false,false,0.70,false,false,6,0
+GAD-1019,Budget LED Light Strip,gadgets,29.99,6,false,false,0.30,false,false,2,0
+GAD-1020,Novelty Plush Speaker,gadgets,44.99,6,false,false,0.50,false,false,3,0

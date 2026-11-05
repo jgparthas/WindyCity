@@ -34,6 +34,7 @@ and recommend one outcome for the returned item:
 - refurbish
 - donate
 - recycle
+- waste           (disposal; only for items that cannot be recycled)
 - human_review   (a person must decide; use only per decision rules 1, 4, 5 and 7 below)
 
 The Rule Gate has already handled deterministic safety and data-quality
@@ -59,7 +60,7 @@ Requirements:
 6. Reasons with severity WARN must be reflected in flags (for example R07
    ungraded, R10 category corrected to the catalog value, R11 non-blocking
    hazard flag).
-7. Compare all four destinations in alternatives, marking ineligible ones.
+7. Compare all five destinations in alternatives, marking ineligible ones.
 8. Do not execute, authorize, or claim to route the item. State that human
    approval is required.
 
@@ -82,12 +83,15 @@ Decision rules (prototype labeling rules, applied in this order):
 7. If donation eligibility is unknown (null) when donation would otherwise be
    recommended -> human_review.
 8. Otherwise, including uneconomic repairs or non-functional products
-   without a better recovery path -> recycle.
+   without a better recovery path -> recycle, or -> waste when recycle is
+   not in constraints.allowed_destinations (the item is not recyclable).
+   Never choose waste when recycle is allowed.
 
 Money and carbon fields are never negative. For an alternative that is not
 eligible or loses money (for example a repair that costs more than the item
 is worth), set expected_recovery_usd to 0 and describe the loss in the
-rationale text. For a recycle outcome expected_recovery_usd is 0.
+rationale text. For a recycle or waste outcome expected_recovery_usd is 0, and for waste
+carbon avoided is 0.
 
 When the outcome is human_review set needs_review to true, expected recovery
 and carbon to 0, and explain what is missing. For other outcomes set
@@ -98,7 +102,7 @@ Return one JSON object matching this structure:
 
 {
   "return_id": "string (copy record.return_id)",
-  "recommended_destination": "restock | refurbish | donate | recycle | human_review",
+  "recommended_destination": "restock | refurbish | donate | recycle | waste | human_review",
   "needs_review": false,
   "expected_recovery_usd": 0.0,
   "estimated_carbon_emission_avoided_kg": 0.0,
@@ -108,7 +112,7 @@ Return one JSON object matching this structure:
   "evidence": ["string"],
   "alternatives": [
     {
-      "destination": "restock | refurbish | donate | recycle",
+      "destination": "restock | refurbish | donate | recycle | waste",
       "eligible": true,
       "expected_recovery_usd": 0.0,
       "carbon_avoided_kg": 0.0,

@@ -14,8 +14,8 @@ returns.json -> Rule Gate -> (PASS) -> Agent -> Review queue -> human decision
 | Name | Values | Defined in |
 |---|---|---|
 | category | `gadgets`, `fashion`, `home_lifestyle` | catalog is the source of truth |
-| destination (gate `allowed_destinations`) | `restock`, `refurbish`, `donate`, `recycle` | `rule_gate.ALL_DESTINATIONS` |
-| outcome (agent `recommended_destination`) | the four destinations plus `human_review` | `agent/models.py` `Outcome` |
+| destination (gate `allowed_destinations`) | `restock`, `refurbish`, `donate`, `recycle`, `waste` (waste only when the catalog says not recyclable) | `rule_gate.ALL_DESTINATIONS` |
+| outcome (agent `recommended_destination`) | the five destinations plus `human_review` | `agent/models.py` `Outcome` |
 | gate_status | `PASS`, `HAZARD`, `INCOMPLETE` | |
 | route | `agent`, `review_queue` | |
 | reason severity | `BLOCK`, `CONSTRAIN`, `WARN` | |

@@ -1,6 +1,6 @@
 """End-to-end workflow: return record -> Rule Gate -> agent -> review queue.
 
-    python pipeline.py                         # all 32 synthetic returns
+    python pipeline.py                         # all 64 synthetic returns
     python pipeline.py --cases TC-02,TC-05     # selected test cases
     python pipeline.py --gate-only             # gate stage only; no API key
     python pipeline.py --out tempHTML/queue.json   # default; the dashboard reads this

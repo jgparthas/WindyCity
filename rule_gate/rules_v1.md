@@ -37,7 +37,7 @@ Whole-word, case-insensitive: burning, burnt, smoke, smoking, on fire, caught fi
 ## Conventions and assumptions
 - **Timestamps**: local receiving-site time, ISO 8601, no timezone suffix, for `received_at` and `evaluated_at`. If timezones are added later, use UTC with `Z` everywhere.
 - **Enums**: lowercase in gate output (`human_review`, `review_queue`).
-- **PASS allowed_destinations**: starts as all four (restock, refurbish, donate, recycle; `resell` was merged into `restock` and the rule version stays v1 because the destination list is schema, not a rule); `donate` is removed when catalog `donation_eligible` is false, `recycle` when `recyclable` is false. Unknown (null) eligibility is not treated as false. (Assumption – confirm.)
+- **PASS allowed_destinations**: starts as all five (restock, refurbish, donate, recycle, waste; `resell` was merged into `restock` and the rule version stays v1 because the destination list is schema, not a rule); `donate` is removed when catalog `donation_eligible` is false, `recycle` when `recyclable` is false (and `waste` is removed unless `recyclable` is false, so non-recyclable items get `waste` instead). Unknown (null) eligibility is not treated as false. (Assumption – confirm.)
 - **R06** does not shrink allowed_destinations; it sets `data_wipe_required: true` (wipe before restock, donate, or release after refurbishment).
 - **Joins**: use `test_case_id`, because RET-2001 intentionally appears twice. `test_case_id` is carried through in `record` unchanged.
 - **Answer-key mapping**: key strings such as `CONSTRAIN:R06_DATA_WIPE_REQUIRED` map to rule_id by the `Rxx` prefix; `HAZARD_REVIEW` maps to `human_review`; `DO_NOT_*` restrictions are implied by HAZARD status.

@@ -7,7 +7,7 @@ Products, prices, repair costs, demand, recall information, donation/recycling r
 ## Files
 
 ### returns.json
-32 synthetic return records used by the Rule Gate and agent through get_return_record.
+64 synthetic return records used by the Rule Gate and agent through get_return_record.
 
 ### product_catalog.csv
 Product reference data used by the Rule Gate (R02, R04, R06) and get_product_info: category, price, warranty, has_battery, has_data_storage, weight_kg, donation eligibility, recyclability, and placeholder carbon factors.
@@ -31,17 +31,17 @@ Contains the expected gate status, gate reasons, restrictions, destination, reco
 
 ## Dataset Conventions
 
-- 32 total return records.
-- Catalog-corrected mix: 25 gadgets, 4 fashion, and 3 home_lifestyle.
-- Raw intake contains 24 gadgets, 4 fashion, and 4 home_lifestyle because TC-13 intentionally contains an incorrect category to test catalog override behavior.
-- 6 of 32 returns are intentionally ungraded so the agent must interpret the notes.
+- 64 total return records (TC-01 through TC-32 are the original set; TC-33 through TC-64 were added to balance the outcomes, with extra Waste cases).
+- Catalog-corrected mix: 36 gadgets, 12 fashion, and 15 home_lifestyle (plus TC-22, whose SKU is deliberately not in the catalog).
+- Raw intake contains 36 gadgets, 12 fashion, and 16 home_lifestyle because TC-13 intentionally contains an incorrect category to test catalog override behavior.
+- 7 of 64 returns are intentionally ungraded so the agent must interpret the notes.
 - received_at uses local receiving-site time with no timezone suffix.
 - customer_notes uses null when no notes are available.
 - SKU format is GAD-####, FSH-####, or HOM-####.
 - Economics and demand are assigned per returned unit, not per SKU.
 - Two returns of the same SKU may therefore have different resale and refurbishment values.
 - Carbon values are placeholder prototype factors until the team agrees on a source or methodology. weight_kg is included so the team can calculate carbon from weight instead; both can coexist until the method is chosen.
-- test_case_id (TC-01 through TC-32) links returns.json, unit_economics.csv, and eval_labels.csv.
+- test_case_id (TC-01 through TC-64) links returns.json, unit_economics.csv, and eval_labels.csv.
 - Use test_case_id rather than return_id when joining test data because RET-2001 intentionally appears twice to test duplicate detection.
 - TC-22 through TC-24 have no unit-economics rows because those records are expected to stop at the Rule Gate.
 - Boolean fields use true / false.
@@ -130,7 +130,7 @@ These rules are used to create the expected outcomes in the synthetic evaluation
 
 7. If donation eligibility is unknown when donation would otherwise be recommended -> HUMAN_REVIEW
 
-8. Otherwise, including uneconomic repairs or non-functional products without a better recovery path -> RECYCLE
+8. Otherwise, including uneconomic repairs or non-functional products without a better recovery path -> RECYCLE, or WASTE when the catalog says the product is not recyclable
 
 These are prototype labeling rules used to create an explainable evaluation set. They are not presented as confirmed Cosmic Mart business policies.
 
@@ -148,20 +148,21 @@ This simplified baseline is used only to compare prototype outcomes. It is not p
 
 Expected destination coverage:
 
-- RESTOCK: 7
-- REFURBISH: 6
-- DONATE: 3
-- RECYCLE: 5
-- HAZARD_REVIEW: 4
-- HUMAN_REVIEW: 7
+- RESTOCK: 11
+- REFURBISH: 10
+- DONATE: 7
+- RECYCLE: 9
+- WASTE: 13
+- HAZARD_REVIEW: 5
+- HUMAN_REVIEW: 9
 
 Gate status coverage:
 
-- PASS: 25
-- HAZARD: 4
-- INCOMPLETE: 3
+- PASS: 55
+- HAZARD: 5
+- INCOMPLETE: 4
 
-Eight PASS cases also contain WARN reasons.
+Nine PASS cases also contain WARN reasons.
 
 ## Edge Cases Included
 
@@ -219,12 +220,12 @@ Refurbishment economics appear favorable, but inventory demand is low. Expected 
 
 ## Value Summary - Synthetic Prototype Results
 
-- 16 of 32 returns receive a second life through Restock, Refurbish, or Donate.
-- 5 additional returns are routed to Recycle.
-- Under the prototype definition, 21 of 32 returns are kept out of landfill.
-- 11 of 32 returns are routed to a human: 4 Hazard Review cases and 7 Human Review cases.
-- Approximately $2,955 of synthetic value is recovered.
-- Approximately 549 kg CO2e is avoided using placeholder carbon factors.
+- 28 of 64 returns receive a second life through Restock, Refurbish, or Donate.
+- 9 additional returns are routed to Recycle, and 13 go to Waste because the item cannot be recycled.
+- Under the prototype definition, 37 of 64 returns are kept out of landfill.
+- 14 of 64 returns are routed to a human: 5 Hazard Review cases and 9 Human Review cases.
+- Approximately $4,740 of synthetic value is recovered.
+- Approximately 805 kg CO2e is avoided using placeholder carbon factors.
 - Under the simplified prototype baseline, two hazardous items and one faulty Grade-A product would have been labeled for restock.
 
 Value-slide wording:

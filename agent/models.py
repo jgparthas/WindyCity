@@ -9,10 +9,11 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Destination = Literal['restock', 'refurbish', 'donate', 'recycle']
+Destination = Literal['restock', 'refurbish', 'donate', 'recycle', 'waste']
 # The agent may also hand the item to a person. human_review is never a
 # member of the gate's allowed_destinations.
-Outcome = Literal['restock', 'refurbish', 'donate', 'recycle', 'human_review']
+Outcome = Literal['restock', 'refurbish', 'donate', 'recycle', 'waste',
+                  'human_review']
 Category = Literal['gadgets', 'fashion', 'home_lifestyle']
 Grade = Literal['A', 'B', 'C', 'D']
 GateStatus = Literal['PASS', 'HAZARD', 'INCOMPLETE']

@@ -1,0 +1,544 @@
+RULES GATE OUTPUT (stage 1)
+Generated: 2026-11-05 11:14:26
+Rule version: v1
+Returns evaluated: 64
+Summary: HAZARD=5, INCOMPLETE=4, PASS=55
+==============================================================================
+
+TC-01  RET-2001  Wireless Headphones (GAD-1001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-02  RET-2002  Bluetooth Speaker (GAD-1002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-03  RET-2003  Winter Jacket (FSH-3001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-04  RET-2004  Stand Mixer (HOM-4001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-05  RET-2005  Galaxy Tablet (GAD-1004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-06  RET-2006  Laptop 14in (GAD-1005)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-07  RET-2007  Robot Vacuum (GAD-1012)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-08  RET-2008  Gaming Console (GAD-1006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-09  RET-2009  Wired Headphones (older model) (GAD-1007)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-10  RET-2010  Children's Coat (FSH-3002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-11  RET-2011  Desk Lamp (HOM-4002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-12  RET-2012  Galaxy Tablet (GAD-1004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+    [R11] WARN: Non-blocking hazard flag present: cracked_glass_or_casing
+
+TC-13  RET-2013  Inkjet Printer (GAD-1008)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R10] WARN: Record category 'home_lifestyle' disagrees with catalog 'gadgets'; catalog value used
+
+TC-14  RET-2014  Running Shoes (FSH-3003)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-15  RET-2015  Fitness Tracker (GAD-1014)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-16  RET-2016  E-Reader (GAD-1015)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes
+
+TC-17  RET-2017  Leather Handbag (FSH-3004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes
+
+TC-18  RET-2018  Digital Camera (GAD-1016)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes
+
+TC-19  RET-2019  Smartphone (GAD-1009)
+  gate_status          : HAZARD
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R04] BLOCK: Blocking hazard flag set: swollen_battery
+
+TC-20  RET-2020  Power Bank 20000mAh (GAD-1017)
+  gate_status          : HAZARD
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R03] BLOCK: SKU is recalled: Battery overheating risk (synthetic recall)
+
+TC-21  RET-2021  Noise-Cancelling Headphones (GAD-1010)
+  gate_status          : HAZARD
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R05] BLOCK: Hazard keyword in customer_notes: burning
+
+TC-22  RET-2022  Wireless Mouse (GAD-9999)
+  gate_status          : INCOMPLETE
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R02] BLOCK: SKU GAD-9999 not found in product_catalog
+
+TC-23  RET-2001  Bluetooth Speaker (GAD-1002)
+  gate_status          : INCOMPLETE
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R08] BLOCK: Duplicate return_id RET-2001
+
+TC-24  RET-2024  Smartwatch (GAD-1003)
+  gate_status          : INCOMPLETE
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R09] BLOCK: purchase_date is after received_at
+
+TC-25  RET-2025  Smartwatch (GAD-1003)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-26  RET-2026  Smart TV 55in (GAD-1011)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-27  RET-2027  Wireless Earbuds (GAD-1018)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes
+
+TC-28  RET-2028  Noise-Cancelling Headphones (GAD-1010)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-29  RET-2029  Office Chair (HOM-4003)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes
+
+TC-30  RET-2031  Bluetooth Speaker (GAD-1002)
+  gate_status          : HAZARD
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R04] BLOCK: Blocking hazard flag set: overheating_or_burn_marks
+
+TC-31  RET-2032  E-Reader (GAD-1015)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+
+TC-32  RET-2030  Galaxy Tablet (GAD-1004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : True
+  reasons:
+    [R06] CONSTRAIN: Product has data storage and wipe is not confirmed; wipe required before any resale or donation
+    [R11] WARN: Non-blocking hazard flag present: cracked_glass_or_casing
+
+TC-33  RET-2033  Memory Foam Pillow (HOM-4004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-34  RET-2034  Memory Foam Pillow (HOM-4004)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-35  RET-2035  Scented Candle Jar Set (HOM-4005)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-36  RET-2036  Ceramic Dinner Plate Set (HOM-4006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-37  RET-2037  Ceramic Dinner Plate Set (HOM-4006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-38  RET-2038  Foam Yoga Mat (HOM-4007)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-39  RET-2039  Vinyl Shower Curtain (HOM-4008)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-40  RET-2040  Polyester Blend Scarf (FSH-3005)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-41  RET-2041  Fast-Fashion Blazer (FSH-3006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-42  RET-2042  Fast-Fashion Blazer (FSH-3006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-43  RET-2043  Budget LED Light Strip (GAD-1019)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-44  RET-2044  Novelty Plush Speaker (GAD-1020)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'waste']
+  data_wipe_required   : False
+  reasons: none
+
+TC-45  RET-2045  Wired Headphones (older model) (GAD-1007)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-46  RET-2046  Robot Vacuum (GAD-1012)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-47  RET-2047  Children's Coat (FSH-3002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-48  RET-2048  Gaming Console (GAD-1006)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-49  RET-2049  Stand Mixer (HOM-4001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-50  RET-2050  Noise-Cancelling Headphones (GAD-1010)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-51  RET-2051  Winter Jacket (FSH-3001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-52  RET-2052  Stand Mixer (HOM-4001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-53  RET-2053  Wireless Headphones (GAD-1001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-54  RET-2054  Robot Vacuum (GAD-1012)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-55  RET-2055  Digital Camera (GAD-1016)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-56  RET-2056  Smart TV 55in (GAD-1011)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-57  RET-2057  Office Chair (HOM-4003)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-58  RET-2058  Wired Headphones (older model) (GAD-1007)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-59  RET-2059  Children's Coat (FSH-3002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-60  RET-2060  Desk Lamp (HOM-4002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-61  RET-2061  Winter Jacket (FSH-3001)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons: none
+
+TC-62  RET-2062  Robot Vacuum (GAD-1012)
+  gate_status          : HAZARD
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R05] BLOCK: Hazard keyword in customer_notes: smoke
+
+TC-63  RET-2063  Garden Planter (HOM-9999)
+  gate_status          : INCOMPLETE
+  route                : review_queue
+  proposed_destination : human_review
+  allowed_destinations : []
+  data_wipe_required   : False
+  reasons:
+    [R02] BLOCK: SKU HOM-9999 not found in product_catalog
+
+TC-64  RET-2064  Desk Lamp (HOM-4002)
+  gate_status          : PASS
+  route                : agent
+  proposed_destination : None
+  allowed_destinations : ['restock', 'refurbish', 'donate', 'recycle']
+  data_wipe_required   : False
+  reasons:
+    [R07] WARN: Condition grade missing; infer from notes

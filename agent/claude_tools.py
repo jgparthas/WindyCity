@@ -96,7 +96,7 @@ async def recycling_rules(args: dict[str, Any]) -> dict[str, Any]:
 @tool(
     "get_carbon_estimate",
     "Get placeholder carbon avoided (kg CO2e) for a SKU and destination "
-    "(restock, refurbish, donate, recycle).",
+    "(restock, refurbish, donate, recycle, waste).",
     {"sku": str, "destination": str},
 )
 async def carbon_estimate(args: dict[str, Any]) -> dict[str, Any]:

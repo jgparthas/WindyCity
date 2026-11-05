@@ -52,6 +52,26 @@ class Consistency(unittest.TestCase):
         for res, rec in zip(RESULTS, RETURNS):
             self.assertEqual(res["record"], rec)
 
+class WasteDestination(unittest.TestCase):
+    """waste replaces recycle exactly when the catalog says not recyclable."""
+
+    def _allowed(self, recyclable):
+        cat = {k: dict(v) for k, v in CATALOG.items()}
+        cat[RETURNS[1]["sku"]]["recyclable"] = recyclable
+        res = g.evaluate(dict(RETURNS[1]), cat, RECALLED, set())
+        return res["constraints"]["allowed_destinations"]
+
+    def test_not_recyclable_gets_waste_not_recycle(self):
+        allowed = self._allowed(False)
+        self.assertIn("waste", allowed)
+        self.assertNotIn("recycle", allowed)
+
+    def test_recyclable_or_unknown_gets_recycle_not_waste(self):
+        for flag in (True, None):
+            allowed = self._allowed(flag)
+            self.assertIn("recycle", allowed)
+            self.assertNotIn("waste", allowed)
+
 
 class AnswerKey(unittest.TestCase):
     def test_against_labels(self):

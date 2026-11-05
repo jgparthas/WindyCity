@@ -12,7 +12,7 @@ TC-10,RET-2010,PASS,,,DONATE,0.00,8,false,LIQUIDATE,Normal,"Usable, low resale v
 TC-11,RET-2011,PASS,,,DONATE,0.00,4,false,LIQUIDATE,Normal,"Works, low resale value; good donation item."
 TC-12,RET-2012,PASS,WARN:R11_NON_BLOCKING_HAZARD_FLAG;CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,8,false,LIQUIDATE,Normal + non-blocking flag,Repair ($450) costs more than value after repair ($300); recycle with data destruction.
 TC-13,RET-2013,PASS,WARN:R10_CATEGORY_MISMATCH_USED_CATALOG,,RECYCLE,0.00,4,false,LIQUIDATE,Normal + category mismatch,Repair costs more than the printer is worth. Entered category is wrong; catalog wins.
-TC-14,RET-2014,PASS,,,RECYCLE,0.00,2,false,LIQUIDATE,Normal,"Not wearable, repair not worth it; textile recycling."
+TC-14,RET-2014,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal,"Not wearable, repair not worth it; mixed-material shoe is not recyclable, so disposed as waste."
 TC-15,RET-2015,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,1,false,LIQUIDATE,Normal + misspelled notes,"Dead device, repair costs more than it's worth."
 TC-16,RET-2016,PASS,WARN:R07_UNGRADED,,RESTOCK,100.00,15,false,LIQUIDATE,"Edge: no grade, clear notes",Ungraded store return; notes clearly show like-new condition.
 TC-17,RET-2017,PASS,WARN:R07_UNGRADED,,RESTOCK,89.99,12,false,LIQUIDATE,"Edge: no grade, clear notes","Ungraded, but notes show it is new; restock."
@@ -31,3 +31,35 @@ TC-29,RET-2029,PASS,WARN:R07_UNGRADED,,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: donat
 TC-30,RET-2031,HAZARD,R04_BLOCKING_HAZARD_FLAG:overheating_or_burn_marks,DO_NOT_RESTOCK;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,LIQUIDATE,Edge: burn-mark hazard flag,Burn marks mean fire risk; gate stops it before the agent.
 TC-31,RET-2032,PASS,CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,HUMAN_REVIEW,,,true,LIQUIDATE,Edge: repair pays off but demand is low,"Repair math works, but low demand means it may not sell; supervisor decides."
 TC-32,RET-2030,PASS,WARN:R11_NON_BLOCKING_HAZARD_FLAG;CONSTRAIN:R06_DATA_WIPE_REQUIRED,DATA_WIPE_REQUIRED_BEFORE_RELEASE,RECYCLE,0.00,8,false,LIQUIDATE,Edge: prompt injection,Note tries to override policy; grade D and economics say recycle.
+TC-33,RET-2033,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Not recyclable and not worth repairing; disposed as waste.
+TC-34,RET-2034,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Foam is spent; not recyclable and not donation eligible.
+TC-35,RET-2035,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Broken wax-and-glass composite is not recyclable.
+TC-36,RET-2036,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Ceramic is not recyclable and the set is broken.
+TC-37,RET-2037,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Ceramic is not recyclable; no resale or donation path.
+TC-38,RET-2038,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Foam mat is torn and not recyclable.
+TC-39,RET-2039,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Vinyl is not recyclable; damaged beyond resale.
+TC-40,RET-2040,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Mixed-fibre garment is not recyclable and not worth repairing.
+TC-41,RET-2041,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Mixed-fibre blazer; repair costs more than it is worth and it cannot be recycled.
+TC-42,RET-2042,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Dye-bleed mixed-fibre garment is not recyclable or donatable.
+TC-43,RET-2043,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Glued-shut budget gadget; cannot be disassembled or recycled.
+TC-44,RET-2044,PASS,,,WASTE,0.00,0,false,LIQUIDATE,Normal + not recyclable,Plush-and-plastic composite is not recyclable.
+TC-45,RET-2045,PASS,,,RECYCLE,0.00,1,false,LIQUIDATE,Normal,Non-functional; repair costs more than the value after repair.
+TC-46,RET-2046,PASS,,,RECYCLE,0.00,5,false,LIQUIDATE,Normal,Repair costs more than value after repair; recycle.
+TC-47,RET-2047,PASS,,,RECYCLE,0.00,2,false,LIQUIDATE,Normal,Too damaged to donate; textile recycling.
+TC-48,RET-2048,PASS,,,RECYCLE,0.00,12,false,LIQUIDATE,Normal,Repair costs more than value after repair; recycle with data destruction.
+TC-49,RET-2049,PASS,,,RECYCLE,0.00,4,false,LIQUIDATE,Normal,Repair costs more than value after repair; metal recycling.
+TC-50,RET-2050,PASS,,,RESTOCK,280.00,8,false,RESTOCK,Normal,Grade A like new; goes back on the shelf.
+TC-51,RET-2051,PASS,,,RESTOCK,150.00,15,false,RESTOCK,Normal,Unworn with tags; goes back on the shelf.
+TC-52,RET-2052,PASS,,,RESTOCK,320.00,20,false,LIQUIDATE,Normal,Fully working open-box item worth over $50.
+TC-53,RET-2053,PASS,,,RESTOCK,220.00,6,false,RESTOCK,Normal,Sealed and unused; restock as new.
+TC-54,RET-2054,PASS,,,REFURBISH,180.00,25,false,LIQUIDATE,Normal,$70 repair recovers $250 (28% repair ratio).
+TC-55,RET-2055,PASS,,,REFURBISH,250.00,25,false,LIQUIDATE,Normal,$90 repair recovers $340.
+TC-56,RET-2056,PASS,,,REFURBISH,280.00,80,false,LIQUIDATE,Normal,$100 repair recovers $380 with high demand.
+TC-57,RET-2057,PASS,,,REFURBISH,105.00,25,false,LIQUIDATE,Normal,$35 repair recovers $140 (25% repair ratio).
+TC-58,RET-2058,PASS,,,DONATE,0.00,3,false,LIQUIDATE,Normal,Working item under $50; donation eligible.
+TC-59,RET-2059,PASS,,,DONATE,0.00,8,false,LIQUIDATE,Normal,Wearable item under $50; donation eligible.
+TC-60,RET-2060,PASS,,,DONATE,0.00,4,false,LIQUIDATE,Normal,Working item under $50; donation eligible.
+TC-61,RET-2061,PASS,,,DONATE,0.00,15,false,LIQUIDATE,Normal,Wearable item under $50; donation eligible.
+TC-62,RET-2062,HAZARD,R05_HAZARD_KEYWORD_IN_NOTES,DO_NOT_RESTOCK;DO_NOT_REFURBISH;DO_NOT_DONATE,HAZARD_REVIEW,,,true,LIQUIDATE,"Edge: hazard in notes, no flag",Hazard keyword in notes is caught by the gate (R05).
+TC-63,RET-2063,INCOMPLETE,R02_SKU_NOT_IN_CATALOG,,HUMAN_REVIEW,,,true,RESTOCK,Edge: unknown SKU,SKU not in catalog; gate cannot look it up (R02).
+TC-64,RET-2064,PASS,WARN:R07_UNGRADED,,HUMAN_REVIEW,,,true,LIQUIDATE,"Edge: ungraded, vague notes",Ungraded and notes do not support an inference; a person decides.

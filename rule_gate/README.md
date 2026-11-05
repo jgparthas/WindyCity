@@ -31,7 +31,7 @@ python -m unittest test_rule_gate -v
 
 Expected: `Ran 14 tests ... OK`. The tests cover:
 1. **Consistency table**: PASS goes to `agent` with no BLOCK reason; HAZARD and INCOMPLETE go to `review_queue`/`human_review` with at least one BLOCK reason.
-2. **Answer key**: all 32 cases in `eval_labels.csv` get the expected status and rule IDs.
+2. **Answer key**: all 64 cases in `eval_labels.csv` get the expected status and rule IDs.
 3. **Individual rules**: missing fields (R01), same-day purchase (R09), each hazard flag, keyword word boundaries, prompt-injection text, wipe handling (R06), and so on.
 
 To eyeball real output, run the gate on the whole dataset:
@@ -40,7 +40,7 @@ To eyeball real output, run the gate on the whole dataset:
 python rule_gate.py
 ```
 
-This prints the 32 gate results as JSON. Pass a different data folder as the first argument if you have one.
+This prints the 64 gate results as JSON. Pass a different data folder as the first argument if you have one.
 
 To try one record yourself:
 
@@ -100,7 +100,7 @@ Details such as the keyword list and the full assumptions are in [rules_v1.md](r
 }
 ```
 
-- `allowed_destinations` is non-empty for PASS and `[]` for HAZARD and INCOMPLETE. For PASS, `donate` is removed if the catalog says the item is not donation eligible, and `recycle` if it is not recyclable.
+- `allowed_destinations` is non-empty for PASS and `[]` for HAZARD and INCOMPLETE. For PASS, `donate` is removed if the catalog says the item is not donation eligible, and `recycle` if it is not recyclable. `waste` is allowed only when the item is not recyclable.
 - `data_wipe_required: true` does not remove any destination. It means a wipe must happen before restock, resale, donation, or release after refurbishment.
 
 ## Conventions to know
