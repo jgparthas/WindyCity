@@ -105,7 +105,7 @@
     return { recovery: r.expected_recovery_usd, carbon: r.estimated_carbon_emission_avoided_kg, assessed: true };
   }
 
-  const getJson = url => fetch(url).then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+  const getJson = url => fetch(url, { cache: 'no-store' }).then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
   Promise.all([getJson('queue.json'), getJson('quarterly_report.json').catch(() => null)])
     .then(([data, report]) => {
       state.report = report;
@@ -412,8 +412,8 @@
   };
   const METRICS = [
     { key: 'returns_processed', id: 'returns', title: 'Returns processed', unit: 'returns', better: 'up', short: v => compact(v), full: v => v.toLocaleString('en-US') },
-    { key: 'money_saved_usd', id: 'money', title: 'Money saved', unit: 'USD', better: 'up', short: v => compact(v, '$'), full: v => '$' + v.toLocaleString('en-US') },
-    { key: 'carbon_emissions_kg', id: 'carbon', title: 'Carbon emissions', unit: 'kg', better: 'up', short: v => compact(v, '', ' kg'), full: v => v.toLocaleString('en-US') + ' kg' },
+    { key: 'money_saved_usd', id: 'money', title: 'Money lost', unit: 'USD', better: 'down', short: v => compact(v, '$'), full: v => '$' + v.toLocaleString('en-US') },
+    { key: 'carbon_emissions_mt_co2', id: 'carbon', title: 'Carbon emissions', unit: 'metric tons CO₂', better: 'down', short: v => (v / 1e6).toFixed(2) + 'M t', full: v => v.toLocaleString('en-US') + ' t CO₂' },
     { key: 'waste_disposed_lbs', id: 'waste', title: 'Waste disposed', unit: 'lbs', better: 'down', short: v => compact(v, '', ' lbs'), full: v => v.toLocaleString('en-US') + ' lbs' }
   ];
   // Strip order: kept destinations first, waste last.
@@ -421,6 +421,7 @@
     { key: 'restock', name: 'Restock', better: 'up' },
     { key: 'refurbish', name: 'Refurbish', better: 'up' },
     { key: 'donate', name: 'Donate', better: 'up' },
+    { key: 'recycle', name: 'Recycle', better: 'up' },
     { key: 'waste', name: 'Waste', better: 'down' }
   ];
 
@@ -472,8 +473,8 @@
     h += '<details class="report-section"><summary>Where returns go by quarter</summary><div class="table-scroll"><table><thead><tr><th>Destination</th>' +
       qs.map(s => '<th class="num">' + esc(s.quarter) + '</th>').join('') + '<th class="num">Change vs previous quarter</th></tr></thead><tbody>';
     DISPOSITIONS.forEach(d => {
-      const c = cur.disposition_breakdown_pct[d.key], p = prev.disposition_breakdown_pct[d.key];
-      h += '<tr><td>' + d.name + '</td>' + qs.map(s => '<td class="num">' + s.disposition_breakdown_pct[d.key] + '%</td>').join('') +
+      const c = cur.disposition_breakdown_pct[d.key] || 0, p = prev.disposition_breakdown_pct[d.key] || 0;
+      h += '<tr><td>' + d.name + '</td>' + qs.map(s => '<td class="num">' + (s.disposition_breakdown_pct[d.key] || 0) + '%</td>').join('') +
         '<td class="num">' + deltaHtml(deltaInfo(d.better, c, p, true)) + '</td></tr>';
     });
     h += '</tbody></table></div></details>';
@@ -484,7 +485,8 @@
     let h = '';
     qs.forEach((s, i) => {
       if (s.agent_in_use && i > 0 && !qs[i - 1].agent_in_use) h += '<div class="launch"><span>Agent system live</span></div>';
-      const b = s.disposition_breakdown_pct;
+      const b = {};
+      DISPOSITIONS.forEach(d => { b[d.key] = s.disposition_breakdown_pct[d.key] || 0; });
       const segs = DISPOSITIONS.filter(d => b[d.key] > 0).map(d =>
         '<div class="seg-bar ' + d.key + '" style="flex-grow:' + b[d.key] + '" title="' + d.name + ' ' + b[d.key] + '%">' +
         '<b>' + b[d.key] + '%</b>' + (b[d.key] >= 12 ? '<span>' + d.name + '</span>' : '') + '</div>').join('');

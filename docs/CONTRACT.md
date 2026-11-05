@@ -121,7 +121,7 @@ The dashboard reads `queue.json` (section 4) and `quarterly_report.json`, and us
 | Risk or confidence | `recommendation.confidence`, `needs_review`, `flags`, plus the gate's `gate_status` and `reasons` |
 | Edit destination | choices are `gate.constraints.allowed_destinations` plus `human_review`; a gate-stopped return can only be `human_review` |
 
-Approve, reopen and edits live in the browser only (status is not a pipeline field). Quarterly figures are separate sample data; their destination keys follow the same enum (`restock`, `refurbish`, `donate`) plus a pre-agent `waste` bucket.
+Approve, reopen and edits live in the browser only (status is not a pipeline field). Quarterly figures are separate sample data; their destination keys follow the same enum (`restock`, `refurbish`, `donate`, `recycle`) plus a pre-agent `waste` bucket.
 
 ## Tool interface
 

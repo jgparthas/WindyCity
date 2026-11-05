@@ -222,6 +222,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .restock { background: #4c1d95; color: var(--white); }
 .refurbish { background: #a66cf0; color: var(--ink); }
 .donate { background: #cdb0f6; color: var(--ink); }
+.recycle { background: #7bb8a6; color: var(--ink); }
 .waste { background: var(--red); color: var(--white); }
 .launch { display: flex; align-items: center; gap: 12px; margin: 18px 0 18px 106px; color: var(--purple-deep); font-weight: 700; font-size: 1rem; }
 .launch::before, .launch::after { content: ""; height: 2px; background: var(--purple); flex: 1; }

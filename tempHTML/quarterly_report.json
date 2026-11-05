@@ -1,9 +1,9 @@
 {
   "sample_data": true,
-  "note": "Synthetic sample figures sized for a retailer with 144 million customers. Not actual Cosmic Mart results. In Q2 and Q3 2026 there was no agent or software: 89% of returns went to a waste plant and 11% were resold (restocked). The agent system went live in Q4 2026. The destination 'resell' was merged into 'restock' to match the Rule Gate and agent, so the restock share includes former resell figures. 'waste' is the pre-agent disposal bucket; the agent's 'recycle' destination is not shown separately in this sample.",
+  "note": "Synthetic sample figures sized for a retailer with 144 million customers. Not actual Cosmic Mart results. In Q2 and Q3 2026 there was no agent or software: most returns went to a waste plant and the rest were resold (restocked). The agent system went live in Q4 2026. The destination 'resell' was merged into 'restock' to match the Rule Gate and agent, so the restock share includes former resell figures. 'waste' is disposal; 'recycle' is the agent's recycling destination and was 0% before the agent. Carbon emissions are in metric tons of CO2; the Q4 figure is 7.67 million and the Q2 and Q3 figures are estimates scaled from Q4 by the volume of returns sent to waste.",
   "units": {
     "money_saved": "USD",
-    "carbon_emissions": "kg",
+    "carbon_emissions": "metric tons CO2",
     "waste_disposed": "lbs",
     "disposition_breakdown": "percent of returns processed"
   },
@@ -12,13 +12,14 @@
       "quarter": "Q2 2026",
       "is_current": false,
       "agent_in_use": false,
-      "returns_processed": 18640000,
-      "money_saved_usd": 90200000,
-      "carbon_emissions_kg": 16800000,
-      "waste_disposed_lbs": 16590000,
+      "returns_processed": 24600000,
+      "money_saved_usd": 147800000,
+      "carbon_emissions_mt_co2": 19010000,
+      "waste_disposed_lbs": 98500000,
       "disposition_breakdown_pct": {
         "refurbish": 0,
         "donate": 0,
+        "recycle": 0,
         "waste": 89,
         "restock": 11
       }
@@ -27,13 +28,14 @@
       "quarter": "Q3 2026",
       "is_current": false,
       "agent_in_use": false,
-      "returns_processed": 19420000,
-      "money_saved_usd": 95100000,
-      "carbon_emissions_kg": 17700000,
-      "waste_disposed_lbs": 17280000,
+      "returns_processed": 25300000,
+      "money_saved_usd": 156400000,
+      "carbon_emissions_mt_co2": 19990000,
+      "waste_disposed_lbs": 102100000,
       "disposition_breakdown_pct": {
         "refurbish": 0,
         "donate": 0,
+        "recycle": 0,
         "waste": 91,
         "restock": 9
       }
@@ -42,15 +44,16 @@
       "quarter": "Q4 2026",
       "is_current": true,
       "agent_in_use": true,
-      "returns_processed": 20150000,
-      "money_saved_usd": 1015600000,
-      "carbon_emissions_kg": 219700000,
-      "waste_disposed_lbs": 1615000,
+      "returns_processed": 27600000,
+      "money_saved_usd": 53150000,
+      "carbon_emissions_mt_co2": 7670000,
+      "waste_disposed_lbs": 35400000,
       "disposition_breakdown_pct": {
+        "restock": 28,
         "refurbish": 24,
         "donate": 11,
-        "waste": 5,
-        "restock": 60
+        "recycle": 5,
+        "waste": 32
       }
     }
   ]
